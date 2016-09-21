@@ -1,0 +1,7 @@
+/.vs
+/src/QRuhmaReport/project.lock.json
+/src/QRuhmaReport/*.user
+/src/QRuhmaReport/bin
+/src/QRuhmaReport/obj
+/src/QRuhmaReport/QRuhmaReport.userosscache
+/src/QRuhmaReport/appsettings.Development.json

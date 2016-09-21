@@ -1,0 +1,150 @@
+﻿@{
+	ViewData["Title"] = "Home Page";
+}
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css">
+<div id="loading"><center><h1>Loading...</h1><img src="~/img/squares.gif" width="100" height="100"></center></div>
+<div id="report" class="hidden">
+	<center><h1>Students (<span id="student_count"></span>)</h1></center>
+	<table id="roaster" 
+		data-order='[[ 6, "desc" ]]'
+		class="display" 
+		width="100%">
+	</table>
+	<br/>
+	<center><h1>unregistered volunteers (<span id="unreg_volunteer_count"></span>)</h1></center>
+	<table id="volunteers" class="display" width="200"></table>
+</div>
+
+@section scripts {
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-1.12.3.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.full.min.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+	<script type="text/javascript">
+		$(function () {
+			var dataTable;
+			var volunteers;
+			var students;	
+
+			function downloadRoaster() {
+				/* set up XMLHttpRequest */
+				var url = "Home/DownloadRoaster/" + @ViewBag.SeminarId;
+				var oReq = new XMLHttpRequest();
+				oReq.open("GET", url, true);
+				oReq.responseType = "arraybuffer";
+
+				oReq.onload = function (e) {
+					var arraybuffer = oReq.response;
+
+					/* convert data to binary string */
+					var data = new Uint8Array(arraybuffer);
+					var arr = new Array();
+					for (var i = 0; i != data.length; ++i) arr[i] = String.fromCharCode(data[i]);
+					var bstr = arr.join("");
+
+					/* Call XLSX */
+					var workbook = XLSX.read(bstr, { type: "binary" });
+
+					transform(workbook);
+				}
+
+				oReq.send();
+			}
+
+			function calculateAge(birthday) {
+				var ageDiffMSec = Date.now() - birthday.getTime();
+				var ageDateEpoc = new Date(ageDiffMSec);
+				return Math.abs(ageDateEpoc.getUTCFullYear() - 1970);
+			}
+
+			function transform(workbook) {
+				var first_sheet_name = workbook.SheetNames[0];
+				var worksheet = workbook.Sheets[first_sheet_name];
+				var range = worksheet['!range'];
+				
+				var headers = [];
+				for (var col = 0; col < range.e.c; col++) {
+					var alphabet = String.fromCharCode(65 + col);
+					var title = worksheet[alphabet + 9].v;
+					headers.push({ alphabet: alphabet, title: title });
+				}
+
+				students = [];
+				for (var row = 10; row < range.e.r - 1; row++) {
+
+					var student = {};
+					headers.forEach(function (h) {
+						var cell = worksheet[h.alphabet + row];
+						var value = cell ? cell.v : null;
+						student[h.title] = value;
+					});
+
+					var dob = student['DOB'];
+					student['Age'] = dob ? calculateAge(new Date(dob)): null;
+
+					if (student['First Name'] || student['Last Name'])
+					{
+						students.push(student);
+					}
+				}
+
+				$('#loading').hide();
+				$('#report').show();
+
+				dataTable = $('#roaster').DataTable({
+					data: students,
+					columns: [
+						{ title: 'First', data: 'First Name' },
+						{ title: 'Last', data: 'Last Name' },
+						{ title: 'Gender', data: 'Gender' },
+						{ title: 'Email', data: 'Email' },
+						{ title: 'City', data: 'City' },
+						{ title: 'State', data: 'State' },
+						{ title: 'Reg. Date', data: 'Registration Date' },
+						{ title: 'Paid', data: 'Fully Paid' },
+					],
+					paging: false
+				});
+
+				var paid = _.filter(students, function(s) { return s['Fully Paid'] == 'Yes'; }).length;
+				$('#student_count').text( paid + '/' + students.length);
+
+				fetchVolunteers();
+			}
+
+			function fetchVolunteers() {
+				$.getJSON('https://slack.com/api/users.list?token=@ViewBag.SlackApiToken', function (result) {
+					volunteers = _.map(result.members, function(v) { return v.profile.email; });
+
+					var indexes = dataTable.rows().eq(0).filter(function(rowIdx) { return _.contains(volunteers, dataTable.cell(rowIdx, 3).data()); });
+					dataTable.rows (indexes).nodes().to$().addClass('volunteer');
+
+					indexes = dataTable.rows().eq(0).filter(function(rowIdx) { return dataTable.cell(rowIdx, 7).data() === 'No'; });
+					dataTable.rows(indexes).nodes().to$().addClass('not_paid');
+
+					var unregistered = _.filter(result.members, function (v) {
+						// those volunteers are not in the students list
+						return v.profile.email && !_.any(students, function(s) {
+							return s.Email && (s.Email.toUpperCase() === v.profile.email.toUpperCase());
+						});					
+					});
+					
+					$('#unreg_volunteer_count').text(unregistered.length);
+
+					var volunteerTable = $('#volunteers').DataTable({
+						data: unregistered,
+						columns: [
+							{ title: 'Name', data: function (x) { return x.real_name || x.name || '' } },
+							{ title: 'Email', data: 'profile.email' }
+						],
+						paging: false,
+						searching: false
+					});
+				});
+			}
+
+			downloadRoaster();
+		});
+	</script>
+}
