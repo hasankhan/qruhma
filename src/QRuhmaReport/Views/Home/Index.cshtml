@@ -125,7 +125,7 @@
 
 					var unregistered = _.filter(result.members, function (v) {
 						// those volunteers are not in the students list
-						return v.profile.email && !_.any(students, function(s) {
+						return !v.deleted && !v.is_bot && v.profile.email && !_.any(students, function(s) {
 							return s.Email && (s.Email.toUpperCase() === v.profile.email.toUpperCase());
 						});					
 					});
