@@ -21,12 +21,9 @@
 			<h2>Sisters: <span id="sistersCount"></span></h2>
 			<h2>Brothers: <span id="brothersCount"></span></h2>
 			<h2>Registered today: <span id="registeredToday"></span></h2>
-			<div id="regByDayChart" style="min-width: 500px; height: 400px; margin: 0 auto"></div>
+			<div id="regByDayChart" style="width:100%; min-width:600px; height: 400px; margin: 0 auto"></div>
 			<h2>Students by City</h2>
-			<table id="cityCountTable"
-				   data-order='[[ 1, "desc" ]]'
-				   class="display">
-			</table>
+			<div id="regByCityChart" style="width: 100%; min-width: 600px; height: 400px; margin: 0 auto"></div>
 		</div>
 
 		<div id="studentsTab" class="tab-pane fade">
@@ -54,14 +51,26 @@
 		$(function () {
 			var dataTable;
 			var volunteers;
-			var students;	
+			var students;
+
+			function persistTabs() {
+				// show active tab on reload
+				if (location.hash !== '') $('a[href="' + location.hash + '"]').tab('show');
+
+				// remember the hash in the URL without jumping
+				$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+					if (history.pushState) {
+						history.pushState(null, null, '#' + $(e.target).attr('href').substr(1));
+					} else {
+						location.hash = '#' + $(e.target).attr('href').substr(1);
+					}
+				});
+			}
 
 			function downloadStudentsList() {
-				/* set up XMLHttpRequest */
 				var oReq = new XMLHttpRequest();
 				oReq.open("GET", "Home/List/", true);
 				oReq.responseType = "arraybuffer";
-
 				oReq.onload = function (e) {
 					var arraybuffer = oReq.response;
 
@@ -154,7 +163,7 @@
 			}
 
 			function renderCharts(students) {
-				var regCountData = 
+				var dateCountData = 
 					_.map(
 						_.values(
 							_.groupBy(students, function(x){ return x['RegistrationStamp'];  })
@@ -167,7 +176,7 @@
 						}
 					);
 
-				regCountData = _.sortBy(regCountData, function(x) { return x[0]; });
+				dateCountData = _.sortBy(dateCountData, function(x) { return x[0]; });
 
 				$('#regByDayChart').highcharts('StockChart', {
 					title: {
@@ -175,7 +184,7 @@
 					},
 					series: [{
 						name: 'Count',
-						data: regCountData
+						data: dateCountData
 					}]
 				});
 
@@ -185,20 +194,58 @@
 							_.groupBy(students, function(x){ return x['City'].toString().toLowerCase().trim().split(' ')[0]; })
 						),
 						function(x) {
-							return {
-								city: x[0]['City'].toString().toLowerCase(),
-								count: x.length
-							};
+							return [
+								x[0]['City'].toString().toLowerCase(),
+								x.length
+							];
 						}
 					);
 
-				$('#cityCountTable').DataTable({
-					data: cityCountData,
-					columns: [
-						{ title: 'City', data: 'city' },
-						{ title: 'Count', data: 'count' },
-					],
-					paging: false
+				cityCountData = _.filter(cityCountData, function (x) { return x[1] > 1; });
+				var cityCountDataSum = _.reduce(cityCountData, function (m, x) { return m+x[1]; }, 0);
+				cityCountData.push(['other', students.length - cityCountDataSum]);
+
+				$('#regByCityChart').highcharts({
+					chart: {
+						type: 'column'
+					},
+					title: {
+						text: 'Registration count by city'
+					},
+					xAxis: {
+						type: 'category',
+						labels: {
+							rotation: -45,
+							style: {
+								fontSize: '13px',
+								fontFamily: 'Verdana, sans-serif'
+							}
+						}
+					},
+					yAxis: {
+						min: 0,
+						title: {
+							text: 'Registration count'
+						}
+					},
+					legend: {
+						enabled: false
+					},
+					series: [{
+						name: 'Registration Count',
+						data: cityCountData,
+						dataLabels: {
+							enabled: true,
+							rotation: -90,
+							color: '#FFFFFF',
+							align: 'right',
+							y: 10, // 10 pixels down from the top
+							style: {
+								fontSize: '13px',
+								fontFamily: 'Verdana, sans-serif'
+							}
+						}
+					}]
 				});
 			}
 
@@ -233,6 +280,7 @@
 				});
 			}
 
+			persistTabs();
 			downloadStudentsList();
 		});
 	</script>
