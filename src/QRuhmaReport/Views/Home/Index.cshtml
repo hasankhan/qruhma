@@ -128,7 +128,6 @@
 						{ title: 'First', data: 'First Name' },
 						{ title: 'Last', data: 'Last Name' },
 						{ title: 'Gender', data: 'Gender' },
-						{ title: 'Email', data: 'Email' },
 						{ title: 'City', data: 'City' },
 						{ title: 'State', data: 'State' },
 						{ title: 'Reg. Date', data: 'Registration Date' },
@@ -210,7 +209,7 @@
 					var indexes = dataTable.rows().eq(0).filter(function(rowIdx) { return _.contains(volunteers, dataTable.cell(rowIdx, 3).data()); });
 					dataTable.rows (indexes).nodes().to$().addClass('volunteer');
 
-					indexes = dataTable.rows().eq(0).filter(function(rowIdx) { return dataTable.cell(rowIdx, 7).data() === 'No'; });
+					indexes = dataTable.rows().eq(0).filter(function(rowIdx) { return dataTable.cell(rowIdx, 6).data() === 'No'; });
 					dataTable.rows(indexes).nodes().to$().addClass('not_paid');
 
 					var unregistered = _.filter(result.members, function (v) {
