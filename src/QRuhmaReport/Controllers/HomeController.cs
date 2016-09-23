@@ -30,6 +30,7 @@ namespace QRuhmaReport.Controllers
             return View();
         }
 
+        [ResponseCache(Location = ResponseCacheLocation.Client, Duration = 600)]
         public async Task<IActionResult> List()
         {
             string email = this.config.GetValue<string>("almaghrib_email");

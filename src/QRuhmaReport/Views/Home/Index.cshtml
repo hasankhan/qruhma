@@ -22,8 +22,8 @@
 			<h2>Brothers: <span id="brothersCount"></span></h2>
 			<h2>Registered today: <span id="registeredToday"></span></h2>
 			<div id="regByDayChart" style="width:100%; min-width:600px; height: 400px; margin: 0 auto"></div>
-			<h2>Students by City</h2>
 			<div id="regByCityChart" style="width: 100%; min-width: 600px; height: 400px; margin: 0 auto"></div>
+			<div id="ageDistChart" style="width: 100%; min-width: 600px; height: 400px; margin: 0 auto"></div>
 		</div>
 
 		<div id="studentsTab" class="tab-pane fade">
@@ -201,6 +201,54 @@
 						}
 					);
 
+				var brotherAges = calculateAgeDistribution(students, 'm');
+				var sisterAges = calculateAgeDistribution(students, 'f');
+
+				$('#ageDistChart').highcharts({
+					chart: {
+						type: 'column'
+					},
+					title: {
+						text: 'Student age distribution'
+					},
+					xAxis: {
+						min: 0,
+						stackLabels: {
+							enabled: true
+						},
+						title: { text: "Age" }
+					},
+					yAxis: {
+						title: { text: "Count" }
+					},
+					legend: {
+						align: 'right',
+						x: -30,
+						verticalAlign: 'top',
+						y: 25,
+						floating: true,
+						backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
+						borderColor: '#CCC',
+						borderWidth: 1,
+						shadow: false
+					},
+					plotOptions: {
+						column: {
+							stacking: 'normal',
+							dataLabels: {
+								enabled: true
+							}
+						}
+					},
+					series: [{
+						name: 'Brother',
+						data: brotherAges
+					}, {
+						name: 'Sister',
+						data: sisterAges
+					}]
+				});
+
 				cityCountData = _.filter(cityCountData, function (x) { return x[1] > 1; });
 				var cityCountDataSum = _.reduce(cityCountData, function (m, x) { return m+x[1]; }, 0);
 				cityCountData.push(['other', students.length - cityCountDataSum]);
@@ -210,7 +258,7 @@
 						type: 'column'
 					},
 					title: {
-						text: 'Registration count by city'
+						text: 'Registrations by city'
 					},
 					xAxis: {
 						type: 'category',
@@ -247,6 +295,25 @@
 						}
 					}]
 				});
+			}
+
+			function calculateAgeDistribution(students, gender) {
+				var ageDist = _.map(
+							_.groupBy(
+								_.filter(students, function (s) { return s['Gender'] == gender && !isNaN(s['Age']); }),
+								function (s) {
+									return s['Age'];
+								}
+							),
+							function (x) {
+								return [
+									x[0]['Age'],
+									x.length
+								];
+							}
+						);
+				
+				return ageDist;
 			}
 
 			function fetchVolunteers() {
