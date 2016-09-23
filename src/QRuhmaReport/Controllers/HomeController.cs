@@ -8,35 +8,54 @@ using Microsoft.Extensions.Configuration;
 using System.Net;
 using Microsoft.Net.Http.Headers;
 using System.IO;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace QRuhmaReport.Controllers
 {
     public class HomeController : Controller
     {
         IConfiguration config;
+        IMemoryCache cache;
 
-        public HomeController(IConfiguration config)
+        public HomeController(IConfiguration config, IMemoryCache cache)
         {
             this.config = config;
+            this.cache = cache;
         }
 
-        public IActionResult Index(int id)
+        public IActionResult Index()
         {
-            this.ViewBag.SeminarId = id;
             this.ViewBag.SlackApiToken = this.config.GetValue<string>("slack_api_token");
             
             return View();
         }
 
-        public async Task<IActionResult> DownloadRoaster(int id)
+        public async Task<IActionResult> List()
         {
             string email = this.config.GetValue<string>("almaghrib_email");
             string password = this.config.GetValue<string>("almaghrib_password");
-            string pageUrl = $"https://my.almaghrib.org/admin/reports/student-roster/id/{id}";
-            return await DownloadPage(email, password, pageUrl);
+            int seminarId = this.config.GetValue<int>("seminar_id");
+            string pageUrl = $"https://my.almaghrib.org/admin/reports/student-roster/id/{seminarId}";
+
+            FileStreamResult result;
+            if (!this.cache.TryGetValue<FileStreamResult>("studentList", out result))
+            {
+                result = await DownloadPage(email, password, pageUrl);
+                this.cache.Set("studentList", result, TimeSpan.FromMinutes(1));
+            }
+            return await CloneFileStreamResultAsync(result);
         }
 
-        private async Task<IActionResult> DownloadPage(string email, string password, string pageUrl)
+        private async Task<FileStreamResult> CloneFileStreamResultAsync(FileStreamResult source)
+        {
+            var outputStream = new MemoryStream();
+            source.FileStream.Seek(0, SeekOrigin.Begin);
+            await source.FileStream.CopyToAsync(outputStream);
+            outputStream.Seek(0, SeekOrigin.Begin);
+            return new FileStreamResult(outputStream, source.ContentType);
+        }
+
+        private async Task<FileStreamResult> DownloadPage(string email, string password, string pageUrl)
         {
             var cookieContainer = new CookieContainer();
             using (var clientHandler = new HttpClientHandler() { CookieContainer = cookieContainer })
@@ -54,13 +73,13 @@ namespace QRuhmaReport.Controllers
                 // make sure auth was successful
                 response.EnsureSuccessStatusCode();
 
-                // download the student roster
+                // download the content
                 response = await httpClient.GetAsync(pageUrl);
                 response.EnsureSuccessStatusCode();
-                Stream rosterXlsStream = await response.Content.ReadAsStreamAsync();
+                Stream contentStream = await response.Content.ReadAsStreamAsync();
 
-                // return the xls to the user
-                return new FileStreamResult(rosterXlsStream, response.Content.Headers.ContentType.MediaType);
+                // return the content
+                return new FileStreamResult(contentStream, response.Content.Headers.ContentType.MediaType);
             }
         }
 

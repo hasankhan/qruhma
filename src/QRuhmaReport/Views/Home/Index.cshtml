@@ -3,35 +3,63 @@
 }
 
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css">
-<div id="loading"><center><h1>Loading...</h1><img src="~/img/squares.gif" width="100" height="100"></center></div>
-<div id="report" class="hidden">
-	<center><h1>Students (<span id="student_count"></span>)</h1></center>
-	<table id="roaster" 
-		data-order='[[ 6, "desc" ]]'
-		class="display" 
-		width="100%">
-	</table>
-	<br/>
-	<center><h1>unregistered volunteers (<span id="unreg_volunteer_count"></span>)</h1></center>
-	<table id="volunteers" class="display" width="200"></table>
-</div>
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 
+<div id="loading"><center><h1>Loading...</h1><img src="~/img/squares.gif" width="100" height="100"></center></div>
+<div id="report" class="collapse">
+	<h1>QRuhma Report</h1>
+
+	<ul class="nav nav-tabs">
+		<li class="active"><a data-toggle="tab" href="#statsTab">Stats</a></li>
+		<li><a data-toggle="tab" href="#studentsTab">Students</a></li>
+		<li><a data-toggle="tab" href="#volunteersTab">Volunteers</a></li>
+	</ul>
+
+	<div class="tab-content">
+		<div id="statsTab" class="tab-pane fade in active">
+			<h2>Total students (<span id="studentCount"></span>)</h2>
+			<h2>Sisters: <span id="sistersCount"></span></h2>
+			<h2>Brothers: <span id="brothersCount"></span></h2>
+			<h2>Registered today: <span id="registeredToday"></span></h2>
+			<div id="regByDayChart" style="min-width: 500px; height: 400px; margin: 0 auto"></div>
+			<h2>Students by City</h2>
+			<table id="cityCountTable"
+				   data-order='[[ 1, "desc" ]]'
+				   class="display">
+			</table>
+		</div>
+
+		<div id="studentsTab" class="tab-pane fade">
+			<table id="studentsTable"
+				   data-order='[[ 6, "desc" ]]'
+				   class="display">
+			</table>
+		</div>
+		
+		<div id="volunteersTab" class="tab-pane fade">
+			<center><h1>unregistered volunteers (<span id="unreg_volunteer_count"></span>)</h1></center>
+			<table id="volunteers" class="display" width="200"></table>
+		</div>
+	</div>
+</div>
 @section scripts {
-	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-1.12.3.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.full.min.js"></script>
-	<script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.full.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+	<script src="https://code.highcharts.com/stock/highstock.js"></script>
+
 	<script type="text/javascript">
 		$(function () {
 			var dataTable;
 			var volunteers;
 			var students;	
 
-			function downloadRoaster() {
+			function downloadStudentsList() {
 				/* set up XMLHttpRequest */
-				var url = "Home/DownloadRoaster/" + @ViewBag.SeminarId;
 				var oReq = new XMLHttpRequest();
-				oReq.open("GET", url, true);
+				oReq.open("GET", "Home/List/", true);
 				oReq.responseType = "arraybuffer";
 
 				oReq.onload = function (e) {
@@ -82,17 +110,19 @@
 
 					var dob = student['DOB'];
 					student['Age'] = dob ? calculateAge(new Date(dob)): null;
+			
+					student['RegistrationStamp'] = new Date(student['Registration Date']).getTime();
 
-					if (student['First Name'] || student['Last Name'])
-					{
+					// ignore students without a name
+					if (student['First Name'] || student['Last Name']) {
 						students.push(student);
 					}
-				}
+				}				
 
-				$('#loading').hide();
-				$('#report').show();
-
-				dataTable = $('#roaster').DataTable({
+				renderCharts(students);
+				renderStats(students);
+				
+				dataTable = $('#studentsTable').DataTable({
 					data: students,
 					columns: [
 						{ title: 'First', data: 'First Name' },
@@ -106,11 +136,71 @@
 					],
 					paging: false
 				});
-
-				var paid = _.filter(students, function(s) { return s['Fully Paid'] == 'Yes'; }).length;
-				$('#student_count').text( paid + '/' + students.length);
+				
+				$('#loading').hide();
+				$('#report').show();
 
 				fetchVolunteers();
+			}
+
+			function renderStats(students) {
+				var genderCount = _.countBy(students, function (x) { return x['Gender'];});
+				$('#brothersCount').text(genderCount['m']);
+				$('#sistersCount').text(genderCount['f']);
+				var paid = _.filter(students, function(s) { return s['Fully Paid'] == 'Yes'; }).length;
+				$('#studentCount').text( paid + '/' + students.length);
+				var today = new Date().toISOString().substr(0, 10);
+				var regToday = _.filter(students, function(s) { return new Date(s['RegistrationStamp']).toISOString().substr(0, 10) === today }).length;
+				$('#registeredToday').text(regToday);
+			}
+
+			function renderCharts(students) {
+				var regCountData = 
+					_.map(
+						_.values(
+							_.groupBy(students, function(x){ return x['RegistrationStamp'];  })
+						), 
+						function(x) { 
+							return [ 
+								x[0]['RegistrationStamp'], 
+								x.length
+							]; 
+						}
+					);
+
+				regCountData = _.sortBy(regCountData, function(x) { return x[0]; });
+
+				$('#regByDayChart').highcharts('StockChart', {
+					title: {
+						text: 'Registrations by day'
+					},
+					series: [{
+						name: 'Count',
+						data: regCountData
+					}]
+				});
+
+				var cityCountData = 
+					_.map(
+						_.values(
+							_.groupBy(students, function(x){ return x['City'].toString().toLowerCase().trim().split(' ')[0]; })
+						),
+						function(x) {
+							return {
+								city: x[0]['City'].toString().toLowerCase(),
+								count: x.length
+							};
+						}
+					);
+
+				$('#cityCountTable').DataTable({
+					data: cityCountData,
+					columns: [
+						{ title: 'City', data: 'city' },
+						{ title: 'Count', data: 'count' },
+					],
+					paging: false
+				});
 			}
 
 			function fetchVolunteers() {
@@ -127,7 +217,7 @@
 						// those volunteers are not in the students list
 						return !v.deleted && !v.is_bot && v.profile.email && !_.any(students, function(s) {
 							return s.Email && (s.Email.toUpperCase() === v.profile.email.toUpperCase());
-						});					
+						});
 					});
 					
 					$('#unreg_volunteer_count').text(unregistered.length);
@@ -144,7 +234,7 @@
 				});
 			}
 
-			downloadRoaster();
+			downloadStudentsList();
 		});
 	</script>
 }
