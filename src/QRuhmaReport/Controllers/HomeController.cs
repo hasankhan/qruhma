@@ -39,10 +39,10 @@ namespace QRuhmaReport.Controllers
             string pageUrl = $"https://my.almaghrib.org/admin/reports/student-roster/id/{seminarId}";
 
             FileStreamResult result;
-            if (!this.cache.TryGetValue<FileStreamResult>("studentList", out result))
+            if (!this.cache.TryGetValue<FileStreamResult>("studentsList", out result))
             {
                 result = await DownloadPage(email, password, pageUrl);
-                this.cache.Set("studentList", result, TimeSpan.FromMinutes(1));
+                this.cache.Set("studentsList", result, TimeSpan.FromMinutes(1));
             }
             return await CloneFileStreamResultAsync(result);
         }

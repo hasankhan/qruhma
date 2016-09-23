@@ -10,13 +10,13 @@
 	<h1>QRuhma Report</h1>
 
 	<ul class="nav nav-tabs">
-		<li class="active"><a data-toggle="tab" href="#statsTab">Stats</a></li>
-		<li><a data-toggle="tab" href="#studentsTab">Students</a></li>
-		<li><a data-toggle="tab" href="#volunteersTab">Volunteers</a></li>
+		<li class="active"><a data-toggle="tab" href="#stats">Stats</a></li>
+		<li><a data-toggle="tab" href="#students">Students</a></li>
+		<li><a data-toggle="tab" href="#volunteers">Volunteers</a></li>
 	</ul>
 
 	<div class="tab-content">
-		<div id="statsTab" class="tab-pane fade in active">
+		<div id="stats" class="tab-pane fade in active">
 			<h2>Total students (<span id="studentCount"></span>)</h2>
 			<h2>Sisters: <span id="sistersCount"></span></h2>
 			<h2>Brothers: <span id="brothersCount"></span></h2>
@@ -26,16 +26,16 @@
 			<div id="ageDistChart" style="width: 100%; min-width: 600px; height: 400px; margin: 0 auto"></div>
 		</div>
 
-		<div id="studentsTab" class="tab-pane fade">
+		<div id="students" class="tab-pane fade">
 			<table id="studentsTable"
 				   data-order='[[ 5, "desc" ]]'
 				   class="display">
 			</table>
 		</div>
 		
-		<div id="volunteersTab" class="tab-pane fade">
+		<div id="volunteers" class="tab-pane fade">
 			<center><h1>unregistered volunteers (<span id="unreg_volunteer_count"></span>)</h1></center>
-			<table id="volunteers" class="display" width="200"></table>
+			<table id="volunteersTable" class="display" width="200"></table>
 		</div>
 	</div>
 </div>
@@ -50,8 +50,8 @@
 	<script type="text/javascript">
 		$(function () {
 			var dataTable;
-			var volunteers;
-			var students;
+			var volunteersList;
+			var studentsList;
 
 			function persistTabs() {
 				// show active tab on reload
@@ -107,7 +107,7 @@
 					headers.push({ alphabet: alphabet, title: title });
 				}
 
-				students = [];
+				studentsList = [];
 				for (var row = 10; row < range.e.r - 1; row++) {
 
 					var student = {};
@@ -124,19 +124,20 @@
 
 					// ignore students without a name
 					if (student['First Name'] || student['Last Name']) {
-						students.push(student);
+						studentsList.push(student);
 					}
 				}				
 
-				renderCharts(students);
-				renderStats(students);
+				renderCharts(studentsList);
+				renderStats(studentsList);
 				
 				dataTable = $('#studentsTable').DataTable({
-					data: students,
+					data: studentsList,
 					columns: [
 						{ title: 'First', data: 'First Name' },
 						{ title: 'Last', data: 'Last Name' },
 						{ title: 'Gender', data: 'Gender' },
+						{ title: 'Email', data: 'Email' },
 						{ title: 'City', data: 'City' },
 						{ title: 'State', data: 'State' },
 						{ title: 'Reg. Date', data: 'Registration Date' },
@@ -151,22 +152,22 @@
 				fetchVolunteers();
 			}
 
-			function renderStats(students) {
-				var genderCount = _.countBy(students, function (x) { return x['Gender'];});
+			function renderStats(studentsList) {
+				var genderCount = _.countBy(studentsList, function (x) { return x['Gender']; });
 				$('#brothersCount').text(genderCount['m']);
 				$('#sistersCount').text(genderCount['f']);
-				var paid = _.filter(students, function(s) { return s['Fully Paid'] == 'Yes'; }).length;
-				$('#studentCount').text( paid + '/' + students.length);
+				var paid = _.filter(studentsList, function (s) { return s['Fully Paid'] == 'Yes'; }).length;
+				$('#studentCount').text(paid + '/' + studentsList.length);
 				var today = new Date().toISOString().substr(0, 10);
-				var regToday = _.filter(students, function(s) { return new Date(s['RegistrationStamp']).toISOString().substr(0, 10) === today }).length;
+				var regToday = _.filter(studentsList, function (s) { return new Date(s['RegistrationStamp']).toISOString().substr(0, 10) === today }).length;
 				$('#registeredToday').text(regToday);
 			}
 
-			function renderCharts(students) {
+			function renderCharts(studentsList) {
 				var dateCountData = 
 					_.map(
 						_.values(
-							_.groupBy(students, function(x){ return x['RegistrationStamp'];  })
+							_.groupBy(studentsList, function (x) { return x['RegistrationStamp']; })
 						), 
 						function(x) { 
 							return [ 
@@ -191,7 +192,7 @@
 				var cityCountData = 
 					_.map(
 						_.values(
-							_.groupBy(students, function(x){ return x['City'].toString().toLowerCase().trim().split(' ')[0]; })
+							_.groupBy(studentsList, function (x) { return x['City'].toString().toLowerCase().trim().split(' ')[0]; })
 						),
 						function(x) {
 							return [
@@ -201,8 +202,8 @@
 						}
 					);
 
-				var brotherAges = calculateAgeDistribution(students, 'm');
-				var sisterAges = calculateAgeDistribution(students, 'f');
+				var brotherAges = calculateAgeDistribution(studentsList, 'm');
+				var sisterAges = calculateAgeDistribution(studentsList, 'f');
 
 				$('#ageDistChart').highcharts({
 					chart: {
@@ -251,7 +252,7 @@
 
 				cityCountData = _.filter(cityCountData, function (x) { return x[1] > 1; });
 				var cityCountDataSum = _.reduce(cityCountData, function (m, x) { return m+x[1]; }, 0);
-				cityCountData.push(['other', students.length - cityCountDataSum]);
+				cityCountData.push(['other', studentsList.length - cityCountDataSum]);
 
 				$('#regByCityChart').highcharts({
 					chart: {
@@ -297,10 +298,10 @@
 				});
 			}
 
-			function calculateAgeDistribution(students, gender) {
+			function calculateAgeDistribution(studentsList, gender) {
 				var ageDist = _.map(
 							_.groupBy(
-								_.filter(students, function (s) { return s['Gender'] == gender && !isNaN(s['Age']); }),
+								_.filter(studentsList, function (s) { return s['Gender'] == gender && !isNaN(s['Age']); }),
 								function (s) {
 									return s['Age'];
 								}
@@ -318,24 +319,24 @@
 
 			function fetchVolunteers() {
 				$.getJSON('https://slack.com/api/users.list?token=@ViewBag.SlackApiToken', function (result) {
-					volunteers = _.map(result.members, function(v) { return v.profile.email; });
+					volunteersList = _.map(result.members, function(v) { return v.profile.email; });
 
-					var indexes = dataTable.rows().eq(0).filter(function(rowIdx) { return _.contains(volunteers, dataTable.cell(rowIdx, 3).data()); });
+					var indexes = dataTable.rows().eq(0).filter(function (rowIdx) { return _.contains(volunteersList, dataTable.cell(rowIdx, 3).data()); });
 					dataTable.rows (indexes).nodes().to$().addClass('volunteer');
 
-					indexes = dataTable.rows().eq(0).filter(function(rowIdx) { return dataTable.cell(rowIdx, 6).data() === 'No'; });
+					indexes = dataTable.rows().eq(0).filter(function(rowIdx) { return dataTable.cell(rowIdx, 7).data() === 'No'; });
 					dataTable.rows(indexes).nodes().to$().addClass('not_paid');
 
 					var unregistered = _.filter(result.members, function (v) {
 						// those volunteers are not in the students list
-						return !v.deleted && !v.is_bot && v.profile.email && !_.any(students, function(s) {
+						return !v.deleted && !v.is_bot && v.profile.email && !_.any(studentsList, function(s) {
 							return s.Email && (s.Email.toUpperCase() === v.profile.email.toUpperCase());
 						});
 					});
 					
 					$('#unreg_volunteer_count').text(unregistered.length);
 
-					var volunteerTable = $('#volunteers').DataTable({
+					var volunteerTable = $('#volunteersTable').DataTable({
 						data: unregistered,
 						columns: [
 							{ title: 'Name', data: function (x) { return x.real_name || x.name || '' } },
