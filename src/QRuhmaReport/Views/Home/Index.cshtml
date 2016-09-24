@@ -120,7 +120,7 @@
 					var dob = student['DOB'];
 					student['Age'] = dob ? calculateAge(new Date(dob)): null;
 			
-					student['RegistrationStamp'] = new Date(student['Registration Date']).getTime();
+					student['RegistrationStamp'] = new Date(student['Registration Date']).toDateString();
 
 					// ignore students without a name
 					if (student['First Name'] || student['Last Name']) {
@@ -140,7 +140,7 @@
 						{ title: 'Email', data: 'Email' },
 						{ title: 'City', data: 'City' },
 						{ title: 'State', data: 'State' },
-						{ title: 'Reg. Date', data: 'Registration Date' },
+						{ title: 'Reg. Date', data: 'RegistrationStamp' },
 						{ title: 'Paid', data: 'Fully Paid' },
 					],
 					paging: false
@@ -158,8 +158,10 @@
 				$('#sistersCount').text(genderCount['f']);
 				var paid = _.filter(studentsList, function (s) { return s['Fully Paid'] == 'Yes'; }).length;
 				$('#studentCount').text(paid + '/' + studentsList.length);
-				var today = new Date().toISOString().substr(0, 10);
-				var regToday = _.filter(studentsList, function (s) { return new Date(s['RegistrationStamp']).toISOString().substr(0, 10) === today }).length;
+				var today = new Date();
+				today.setHours(0, 0, 0, 0);
+				today = today.toDateString();
+				var regToday = _.filter(studentsList, function (s) { return s['RegistrationStamp'] === today }).length;
 				$('#registeredToday').text(regToday);
 			}
 
@@ -171,7 +173,7 @@
 						), 
 						function(x) { 
 							return [ 
-								x[0]['RegistrationStamp'], 
+								new Date(x[0]['RegistrationStamp']).getTime(), 
 								x.length
 							]; 
 						}
@@ -190,16 +192,19 @@
 				});
 
 				var cityCountData = 
-					_.map(
-						_.values(
-							_.groupBy(studentsList, function (x) { return x['City'].toString().toLowerCase().trim().split(' ')[0]; })
+					_.sortBy(
+						_.map(
+							_.values(
+								_.groupBy(studentsList, function (x) { return x['City'].toString().toLowerCase().trim().split(' ')[0]; })
+							),
+							function(x) {
+								return [
+									x[0]['City'].toString().toLowerCase(),
+									x.length
+								];
+							}
 						),
-						function(x) {
-							return [
-								x[0]['City'].toString().toLowerCase(),
-								x.length
-							];
-						}
+						function(x) { return -x[1]; }
 					);
 
 				var brotherAges = calculateAgeDistribution(studentsList, 'm');
