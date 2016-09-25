@@ -336,14 +336,21 @@
 				$.getJSON('https://slack.com/api/users.list?token=@ViewBag.SlackApiToken', function (result) {
 					volunteersList = result.members;
 
+					volunteersList.forEach(function (v) {
+						var name = (v.real_name || v.name).toLowerCase();
+						var email = (v.profile.email || '').toLowerCase();
+
+						v.isMatch = function (e, n) {
+							return name === (n || '').toLowerCase() || email === (e || '').toLowerCase();
+						};
+					});
+
 					var indexes = dataTable.rows().eq(0).filter(function (rowIdx) {
 						var email = dataTable.cell(rowIdx, 3).data().toLowerCase();
 						var name = (dataTable.cell(rowIdx, 0).data() + ' ' + dataTable.cell(rowIdx, 1).data()).toLowerCase();
 						return _.any(volunteersList, function (v) {
-							return  (v.real_name && name === v.real_name.toLowerCase()) ||
-									(v.name && name === v.name.toLowerCase()) ||
-									v.profile.email && email === v.profile.email.toLowerCase();
-						})
+							return v.isMatch(email, name);
+						});
 					});
 					dataTable.rows (indexes).nodes().to$().addClass('volunteer');
 
@@ -352,10 +359,8 @@
 
 					var unregistered = _.filter(volunteersList, function (v) {
 						// those volunteers are not in the students list
-						return !v.deleted && !v.is_bot && v.profile.email && !_.any(studentsList, function (s) {
-							var name = s.Name.toLowerCase();
-							return (s.Email && v.profile.email && (s.Email.toLowerCase() === v.profile.email.toLowerCase())) ||
-									(name === v.real_name.toLowerCase() || name === v.name.toLowerCase());
+						return v.profile.email && !v.deleted && !v.is_bot && !_.any(studentsList, function (s) {
+							return v.isMatch(s.Email, s.Name);
 						});
 					});
 					
