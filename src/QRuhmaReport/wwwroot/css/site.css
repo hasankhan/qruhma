@@ -32,3 +32,7 @@ tr.volunteer.not_paid td {
 	color:deeppink;
 	font-weight:bold;
 }
+
+.student_legend {
+	margin:20px;
+}

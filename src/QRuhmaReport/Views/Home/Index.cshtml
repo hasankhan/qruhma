@@ -27,6 +27,14 @@
 		</div>
 
 		<div id="students" class="tab-pane fade">
+			<table class="student_legend">
+				<tr class="volunteer">
+					<td>Volunteer</td>
+				</tr>
+				<tr class="volunteer not_paid">
+					<td>Volunteer has not paid</td>
+				</tr>
+			</table>
 			<table id="studentsTable"
 				   data-order='[[ 6, "desc" ]]'
 				   class="display">
@@ -121,6 +129,8 @@
 					student['Age'] = dob ? calculateAge(new Date(dob)): null;
 			
 					student['RegistrationStamp'] = new Date(student['Registration Date']).toDateString();
+
+					student['Name'] = student['First Name'] + ' ' + student['Last Name']
 
 					// ignore students without a name
 					if (student['First Name'] || student['Last Name']) {
@@ -324,18 +334,28 @@
 
 			function fetchVolunteers() {
 				$.getJSON('https://slack.com/api/users.list?token=@ViewBag.SlackApiToken', function (result) {
-					volunteersList = _.map(result.members, function(v) { return v.profile.email; });
+					volunteersList = result.members;
 
-					var indexes = dataTable.rows().eq(0).filter(function (rowIdx) { return _.contains(volunteersList, dataTable.cell(rowIdx, 3).data()); });
+					var indexes = dataTable.rows().eq(0).filter(function (rowIdx) {
+						var email = dataTable.cell(rowIdx, 3).data().toLowerCase();
+						var name = (dataTable.cell(rowIdx, 0).data() + ' ' + dataTable.cell(rowIdx, 1).data()).toLowerCase();
+						return _.any(volunteersList, function (v) {
+							return  (v.real_name && name === v.real_name.toLowerCase()) ||
+									(v.name && name === v.name.toLowerCase()) ||
+									v.profile.email && email === v.profile.email.toLowerCase();
+						})
+					});
 					dataTable.rows (indexes).nodes().to$().addClass('volunteer');
 
 					indexes = dataTable.rows().eq(0).filter(function(rowIdx) { return dataTable.cell(rowIdx, 7).data() === 'No'; });
 					dataTable.rows(indexes).nodes().to$().addClass('not_paid');
 
-					var unregistered = _.filter(result.members, function (v) {
+					var unregistered = _.filter(volunteersList, function (v) {
 						// those volunteers are not in the students list
-						return !v.deleted && !v.is_bot && v.profile.email && !_.any(studentsList, function(s) {
-							return s.Email && (s.Email.toUpperCase() === v.profile.email.toUpperCase());
+						return !v.deleted && !v.is_bot && v.profile.email && !_.any(studentsList, function (s) {
+							var name = s.Name.toLowerCase();
+							return (s.Email && v.profile.email && (s.Email.toLowerCase() === v.profile.email.toLowerCase())) ||
+									(name === v.real_name.toLowerCase() || name === v.name.toLowerCase());
 						});
 					});
 					
