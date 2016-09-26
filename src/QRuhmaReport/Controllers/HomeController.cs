@@ -23,26 +23,26 @@ namespace QRuhmaReport.Controllers
             this.cache = cache;
         }
 
-        public IActionResult Index()
+        public IActionResult Index(int? id)
         {
             this.ViewBag.SlackApiToken = this.config.GetValue<string>("slack_api_token");
-            
+            this.ViewBag.SeminarId = id.GetValueOrDefault(this.config.GetValue<int?>("seminar_id").GetValueOrDefault());
+
             return View();
         }
 
         [ResponseCache(Location = ResponseCacheLocation.Client, Duration = 60)]
-        public async Task<IActionResult> List()
+        public async Task<IActionResult> List(int id)
         {
             string email = this.config.GetValue<string>("almaghrib_email");
             string password = this.config.GetValue<string>("almaghrib_password");
-            int seminarId = this.config.GetValue<int>("seminar_id");
-            string pageUrl = $"https://my.almaghrib.org/admin/reports/student-roster/id/{seminarId}";
+            string pageUrl = $"https://my.almaghrib.org/admin/reports/student-roster/id/{id}";
 
             FileStreamResult result;
             if (!this.cache.TryGetValue<FileStreamResult>("studentsList", out result))
             {
                 result = await DownloadPage(email, password, pageUrl);
-                this.cache.Set("studentsList", result, TimeSpan.FromMinutes(1));
+                this.cache.Set("studentsList" + id, result, TimeSpan.FromMinutes(1));
             }
             return await CloneFileStreamResultAsync(result);
         }

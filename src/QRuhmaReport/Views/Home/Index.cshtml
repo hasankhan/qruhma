@@ -77,7 +77,7 @@
 
 			function downloadStudentsList() {
 				var oReq = new XMLHttpRequest();
-				oReq.open("GET", "Home/List/", true);
+				oReq.open("GET", "Home/List/@ViewBag.SeminarId", true);
 				oReq.responseType = "arraybuffer";
 				oReq.onload = function (e) {
 					var arraybuffer = oReq.response;
