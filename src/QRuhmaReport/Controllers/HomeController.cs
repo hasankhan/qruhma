@@ -26,7 +26,8 @@ namespace QRuhmaReport.Controllers
         public IActionResult Index(int? id)
         {
             this.ViewBag.SlackApiToken = this.config.GetValue<string>("slack_api_token");
-            this.ViewBag.SeminarId = id.GetValueOrDefault(this.config.GetValue<int?>("seminar_id").GetValueOrDefault());
+            this.ViewBag.SeminarId = id.GetValueOrDefault();
+            this.ViewBag.UserId = this.Request.Headers["X-MS-CLIENT-PRINCIPAL-NAME"];
 
             return View();
         }

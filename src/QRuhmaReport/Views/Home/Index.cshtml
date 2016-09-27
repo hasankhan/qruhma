@@ -7,7 +7,25 @@
 
 <div id="loading"><center><h1>Loading...</h1><img src="~/img/squares.gif" width="100" height="100"></center></div>
 <div id="report" class="collapse">
-	<h1>QRuhma Report</h1>
+	<h1><a href="@Url.Action("Index")">QRuhma Report</a></h1>
+	
+	<div class="dropdown">
+		<button class="btn btn-default dropdown-toggle" type="button" id="seminarSelector" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+			Select seminar
+			<span class="caret"></span>
+		</button>
+		<ul id="seminarList" class="dropdown-menu" aria-labelledby="seminarSelector">
+		</ul>
+	</div>
+	<br />
+	<div>
+		<span id="seminarName"></span>:  <span id="seminarTitle"></span><br />
+		<span id="seminarDate"></span><br />
+		<span id="seminarInstructor"></span>
+
+	</div>
+
+	<br/>
 
 	<ul class="nav nav-tabs">
 		<li class="active"><a data-toggle="tab" href="#stats">Stats</a></li>
@@ -60,6 +78,28 @@
 			var dataTable;
 			var volunteersList;
 			var studentsList;
+			var seminarId = @ViewBag.SeminarId || seminars[seminars.length - 1].id;
+
+			ga('set', 'userId', '@ViewBag.UserId');
+
+			var seminarList = $('#seminarList');
+			for (var i = seminars.length; i>0; i--) {
+				var s = seminars[i - 1];
+				seminarList.append('<li><a data-val="' + s.id + '" href="#">' + s.name + '</a></li>');
+			}
+
+			seminarList.on('click', 'li a', function () {
+				var id = $(this).data('val');
+				window.location = "@Url.Action("Index", "Home")?id=" + id;
+			});
+
+			var seminar = _.find(seminars, function (s) { return s.id == seminarId; });
+			if (seminar) {
+				$('#seminarName').text(seminar.name);
+				$('#seminarTitle').text(seminar.title);
+				$('#seminarDate').text(seminar.date);
+				$('#seminarInstructor').text(seminar.instructor);
+			}
 
 			function persistTabs() {
 				// show active tab on reload
@@ -77,7 +117,7 @@
 
 			function downloadStudentsList() {
 				var oReq = new XMLHttpRequest();
-				oReq.open("GET", "Home/List/@ViewBag.SeminarId", true);
+				oReq.open("GET", "Home/List/" + seminarId, true);
 				oReq.responseType = "arraybuffer";
 				oReq.onload = function (e) {
 					var arraybuffer = oReq.response;
@@ -107,7 +147,7 @@
 				var first_sheet_name = workbook.SheetNames[0];
 				var worksheet = workbook.Sheets[first_sheet_name];
 				var range = worksheet['!range'];
-				
+
 				var headers = [];
 				for (var col = 0; col < range.e.c; col++) {
 					var alphabet = String.fromCharCode(65 + col);
@@ -127,7 +167,7 @@
 
 					var dob = student['DOB'];
 					student['Age'] = dob ? calculateAge(new Date(dob)): null;
-			
+
 					student['RegistrationStamp'] = new Date(student['Registration Date']).toDateString();
 
 					student['Name'] = student['First Name'] + ' ' + student['Last Name']
@@ -136,11 +176,11 @@
 					if (student['First Name'] || student['Last Name']) {
 						studentsList.push(student);
 					}
-				}				
+				}
 
 				renderCharts(studentsList);
 				renderStats(studentsList);
-				
+
 				dataTable = $('#studentsTable').DataTable({
 					data: studentsList,
 					columns: [
@@ -155,7 +195,7 @@
 					],
 					paging: false
 				});
-				
+
 				$('#loading').hide();
 				$('#report').show();
 
@@ -176,16 +216,16 @@
 			}
 
 			function renderCharts(studentsList) {
-				var dateCountData = 
+				var dateCountData =
 					_.map(
 						_.values(
 							_.groupBy(studentsList, function (x) { return x['RegistrationStamp']; })
-						), 
-						function(x) { 
-							return [ 
-								new Date(x[0]['RegistrationStamp']).getTime(), 
+						),
+						function(x) {
+							return [
+								new Date(x[0]['RegistrationStamp']).getTime(),
 								x.length
-							]; 
+							];
 						}
 					);
 
@@ -201,7 +241,7 @@
 					}]
 				});
 
-				var cityCountData = 
+				var cityCountData =
 					_.sortBy(
 						_.map(
 							_.values(
@@ -328,7 +368,7 @@
 								];
 							}
 						);
-				
+
 				return ageDist;
 			}
 
@@ -363,7 +403,7 @@
 							return v.isMatch(s.Email, s.Name);
 						});
 					});
-					
+
 					$('#unreg_volunteer_count').text(unregistered.length);
 
 					var volunteerTable = $('#volunteersTable').DataTable({

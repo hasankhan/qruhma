@@ -17,6 +17,10 @@ textarea {
     max-width: 280px;
 }
 
+#seminarName {
+	font-weight: bold;
+}
+
 #loading {
 	color: dodgerblue;
 }
