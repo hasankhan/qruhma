@@ -204,10 +204,17 @@
 
 			function renderStats(studentsList) {
 				var genderCount = _.countBy(studentsList, function (x) { return x['Gender'] + '_' + x['Fully Paid']; });
-				$('#brothersCount').text(genderCount['m_Yes'] + '/' + (genderCount['m_Yes'] + genderCount['m_No']));
-				$('#sistersCount').text(genderCount['f_Yes'] + '/' + (genderCount['f_Yes'] + genderCount['f_No']));
-				var paid = _.filter(studentsList, function (s) { return s['Fully Paid'] == 'Yes'; }).length;
-				$('#studentCount').text(paid + '/' + studentsList.length);
+				
+				var paidBrothers = genderCount['m_Yes'] || 0;
+				var unpaidBrothers = genderCount['m_No'] || 0;
+				$('#brothersCount').text(paidBrothers + '/' + (paidBrothers + unpaidBrothers));
+				
+				var paidSisters = genderCount['f_Yes'] || 0;
+				var unpaidSisters = genderCount['f_No'] || 0;
+				$('#sistersCount').text(paidSisters + '/' + (paidSisters + unpaidSisters));
+				
+				$('#studentCount').text((paidBrothers + paidSisters) + '/' + studentsList.length);
+								
 				var today = new Date();
 				today.setHours(0, 0, 0, 0);
 				today = today.toDateString();
