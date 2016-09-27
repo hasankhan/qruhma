@@ -203,9 +203,9 @@
 			}
 
 			function renderStats(studentsList) {
-				var genderCount = _.countBy(studentsList, function (x) { return x['Gender']; });
-				$('#brothersCount').text(genderCount['m']);
-				$('#sistersCount').text(genderCount['f']);
+				var genderCount = _.countBy(studentsList, function (x) { return x['Gender'] + '_' + x['Fully Paid']; });
+				$('#brothersCount').text(genderCount['m_Yes'] + '/' + (genderCount['m_Yes'] + genderCount['m_No']));
+				$('#sistersCount').text(genderCount['f_Yes'] + '/' + (genderCount['f_Yes'] + genderCount['f_No']));
 				var paid = _.filter(studentsList, function (s) { return s['Fully Paid'] == 'Yes'; }).length;
 				$('#studentCount').text(paid + '/' + studentsList.length);
 				var today = new Date();
