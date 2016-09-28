@@ -54,7 +54,7 @@
 				</tr>
 			</table>
 			<table id="studentsTable"
-				   data-order='[[ 6, "desc" ]]'
+				   data-order='[[ 7, "desc" ]]'
 				   class="display">
 			</table>
 		</div>
@@ -184,6 +184,7 @@
 				dataTable = $('#studentsTable').DataTable({
 					data: studentsList,
 					columns: [
+					    { title: '', searchable: false, orderable: false, defaultContent: '' },
 						{ title: 'First', data: 'First Name' },
 						{ title: 'Last', data: 'Last Name' },
 						{ title: 'Gender', data: 'Gender' },
@@ -194,7 +195,15 @@
 						{ title: 'Paid', data: 'Fully Paid' },
 					],
 					paging: false
+				}).on('order.dt search.dt', function () {
+					dataTable.column(0, {search:'applied', order:'applied'})
+						.nodes()
+						.each(function (cell, i) { 
+							cell.innerHTML = i+1; } 
+						);
 				});
+				
+				dataTable.draw();
 
 				$('#loading').hide();
 				$('#report').show();
@@ -393,15 +402,15 @@
 					});
 
 					var indexes = dataTable.rows().eq(0).filter(function (rowIdx) {
-						var email = dataTable.cell(rowIdx, 3).data().toLowerCase();
-						var name = (dataTable.cell(rowIdx, 0).data() + ' ' + dataTable.cell(rowIdx, 1).data()).toLowerCase();
+						var email = dataTable.cell(rowIdx, 4).data().toLowerCase();
+						var name = (dataTable.cell(rowIdx, 1).data() + ' ' + dataTable.cell(rowIdx, 2).data()).toLowerCase();
 						return _.any(volunteersList, function (v) {
 							return v.isMatch(email, name);
 						});
 					});
 					dataTable.rows (indexes).nodes().to$().addClass('volunteer');
 
-					indexes = dataTable.rows().eq(0).filter(function(rowIdx) { return dataTable.cell(rowIdx, 7).data() === 'No'; });
+					indexes = dataTable.rows().eq(0).filter(function(rowIdx) { return dataTable.cell(rowIdx, 8).data() === 'No'; });
 					dataTable.rows(indexes).nodes().to$().addClass('not_paid');
 
 					var unregistered = _.filter(volunteersList, function (v) {
