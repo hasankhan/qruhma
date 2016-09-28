@@ -1,8 +1,4 @@
 ﻿var seminars = [
-	{ id: 116, name: "Rules of Engagement", title: "Islamic Ethics", date: "Feb 25th, 2005", instructor: "Shaykh Mohammed Faqih" },
-	{ id: 117, name: "Conquest", title: "History of the Khulafā", date: "Jul 8th, 2005", instructor: "Shaykh Abdulbary Yahya" },
-	{ id: 87, name: "Light of Guidance", title: "Doctrines of Faith I", date: "Nov 18th, 2005", instructor: "Shaykh Yasir Qadhi" },
-	{ id: 72, name: "Route 114", title: "Sciences of the Qur’ān", date: "May 19th, 2006", instructor: "Shaykh Mohammed Faqih" },
 	{ id: 566, name: "Precious Provisions", title: "Fiqh of Food & Dress", date: "Mar 23rd, 2012", instructor: "Shaykh Yasir Qadhi" },
 	{ id: 602, name: "The Prophet's Smile", title: "Shamā’il (Characteristics) of Muhammad (S)", date: "Jun 22nd, 2012", instructor: "Shaykh Yaser Birjas" },
 	{ id: 633, name: "Love Notes", title: "Marriage and Family Life", date: "Sep 14th, 2012", instructor: "Shaykh Yaser Birjas" },
