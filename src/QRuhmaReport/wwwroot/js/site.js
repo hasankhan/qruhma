@@ -17,14 +17,14 @@
 	{ id: 1104, name: "Firm Ground", title: "Foundations For Clarifying Textual Misinterpretation", date: "Jan 29th, 2016", instructor: "Shaykh Abdul Nasir Jangda" },
 	{ id: 1140, name: "Complicated?", title: "A to Z of Women's Modern Fiqh", date: "Apr 1st, 2016", instructor: "Shaykh Waleed Basyouni" },
 	{ id: 1171, name: "No Doubt", title: "God, Religion and Politics in the Modern World", date: "Sep 23rd, 2016", instructor: "Shaykh Yasir Qadhi" },
-	{ id: 1236, name: "Protect This House", title: "Al-Adab Al-Mufrad", date: "Dec 2nd, 2016", instructor: "Shaykh Yaser Birjas" },
+	{ id: 1236, name: "Protect This House", title: "Al-Adab Al-Mufrad", date: "Dec 2nd, 2016", instructor: "Shaykh Yaser Birjas" }
 ];
 
 var App = (function(){
 	function App () {
 	}
 
-	App.prototype.run = function(seminarId, homePageUrl, slackApiToken) {
+	App.prototype.run = function(seminarId, homePageUrl, rosterUrl, slackApiToken) {
 		var dataTable;
 		var volunteersList;
 		var studentsList;
@@ -40,7 +40,7 @@ var App = (function(){
 			window.location = homePageUrl + "?id=" + id;
 		});
 
-		var seminar = _.find(seminars, function (s) { return s.id == seminarId; });
+		var seminar = _.find(seminars, function (s) { return s.id === seminarId; });
 		if (seminar) {
 			$('#seminarName').text(seminar.name);
 			$('#seminarTitle').text(seminar.title);
@@ -64,7 +64,7 @@ var App = (function(){
 
 		function downloadStudentsList() {
 			var oReq = new XMLHttpRequest();
-			oReq.open("GET", "Home/List/" + seminarId, true);
+			oReq.open("GET", rosterUrl + '?id=' + seminarId, true);
 			oReq.responseType = "arraybuffer";
 			oReq.onload = function (e) {
 				var arraybuffer = oReq.response;
@@ -72,14 +72,14 @@ var App = (function(){
 				/* convert data to binary string */
 				var data = new Uint8Array(arraybuffer);
 				var arr = new Array();
-				for (var i = 0; i != data.length; ++i) arr[i] = String.fromCharCode(data[i]);
+				for (var i = 0; i !== data.length; ++i) arr[i] = String.fromCharCode(data[i]);
 				var bstr = arr.join("");
 
 				/* Call XLSX */
 				var workbook = XLSX.read(bstr, { type: "binary" });
 
 				transform(workbook);
-			}
+			};
 
 			oReq.send();
 		}
@@ -117,7 +117,7 @@ var App = (function(){
 
 				student['RegistrationStamp'] = new Date(student['Registration Date']).toDateString();
 
-				student['Name'] = student['First Name'] + ' ' + student['Last Name']
+				student['Name'] = student['First Name'] + ' ' + student['Last Name'];
 
 				// ignore students without a name
 				if (student['First Name'] || student['Last Name']) {
@@ -128,7 +128,7 @@ var App = (function(){
 			renderCharts(studentsList);
 			renderStats(studentsList);
 
-			dataTable = $('#studentsTable').DataTable({
+			dataTable = $('#rosterTable').DataTable({
 				data: studentsList,
 				columns: [
 					{ title: '', searchable: false, orderable: false, defaultContent: '' },
@@ -139,7 +139,7 @@ var App = (function(){
 					{ title: 'City', data: 'City' },
 					{ title: 'State', data: 'State' },
 					{ title: 'Reg. Date', data: 'RegistrationStamp' },
-					{ title: 'Paid', data: 'Fully Paid' },
+					{ title: 'Paid', data: 'Fully Paid' }
 				],
 				paging: false
 			}).on('order.dt search.dt', function () {
@@ -169,12 +169,13 @@ var App = (function(){
 			var unpaidSisters = genderCount['f_No'] || 0;
 			$('#sistersCount').text(paidSisters + '/' + (paidSisters + unpaidSisters));
 				
-			$('#studentCount').text((paidBrothers + paidSisters) + '/' + studentsList.length);
+			var totalCount = paidBrothers + paidSisters;
+			$('#studentCount').text(totalCount + '/' + studentsList.length);
 								
 			var today = new Date();
 			today.setHours(0, 0, 0, 0);
 			today = today.toDateString();
-			var regToday = _.filter(studentsList, function (s) { return s['RegistrationStamp'] === today }).length;
+			var regToday = _.filter(studentsList, function (s) { return s['RegistrationStamp'] === today; }).length;
 			$('#registeredToday').text(regToday);
 		}
 
@@ -246,7 +247,7 @@ var App = (function(){
 					verticalAlign: 'top',
 					y: 25,
 					floating: true,
-					backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
+					backgroundColor: 'white',
 					borderColor: '#CCC',
 					borderWidth: 1,
 					shadow: false
@@ -319,7 +320,7 @@ var App = (function(){
 		function calculateAgeDistribution(studentsList, gender) {
 			var ageDist = _.map(
 						_.groupBy(
-							_.filter(studentsList, function (s) { return s['Gender'] == gender && !isNaN(s['Age']); }),
+							_.filter(studentsList, function (s) { return s['Gender'] === gender && !isNaN(s['Age']); }),
 							function (s) {
 								return s['Age'];
 							}
@@ -372,7 +373,7 @@ var App = (function(){
 				var volunteerTable = $('#volunteersTable').DataTable({
 					data: unregistered,
 					columns: [
-						{ title: 'Name', data: function (x) { return x.real_name || x.name || '' } },
+						{ title: 'Name', data: function (x) { return x.real_name || x.name || ''; } },
 						{ title: 'Email', data: 'profile.email' }
 					],
 					paging: false,

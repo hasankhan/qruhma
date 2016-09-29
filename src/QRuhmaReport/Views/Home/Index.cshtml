@@ -29,7 +29,7 @@
 
 	<ul class="nav nav-tabs">
 		<li class="active"><a data-toggle="tab" href="#stats">Stats</a></li>
-		<li><a data-toggle="tab" href="#students">Students</a></li>
+		<li><a data-toggle="tab" href="#roster">Roster</a></li>
 		<li><a data-toggle="tab" href="#volunteers">Volunteers</a></li>
 	</ul>
 
@@ -44,7 +44,7 @@
 			<div id="ageDistChart" style="width: 100%; min-width: 600px; height: 400px; margin: 0 auto"></div>
 		</div>
 
-		<div id="students" class="tab-pane fade">
+		<div id="roster" class="tab-pane fade">
 			<table class="student_legend">
 				<tr class="volunteer">
 					<td>Volunteer</td>
@@ -53,7 +53,7 @@
 					<td>Volunteer has not paid</td>
 				</tr>
 			</table>
-			<table id="studentsTable"
+			<table id="rosterTable"
 				   data-order='[[ 7, "desc" ]]'
 				   class="display">
 			</table>
@@ -75,12 +75,13 @@
 
 	<script type="text/javascript">
 		$(function () {
-			var seminarId = @ViewBag.SeminarId || seminars[seminars.length - 1].id;
-			var homePageUrl = '@Url.Action("Index", "Home")';
-			var slackApiToken = '@ViewBag.SlackApiToken';
 			ga('set', 'userId', '@ViewBag.UserId');
 
-			new App().run(seminarId, homePageUrl, slackApiToken);
+			var seminarId = @ViewBag.SeminarId || seminars[seminars.length - 1].id;
+			var homePageUrl = '@Url.Action("Index", "Home")';
+			var rosterUrl = '@Url.Action("Index", "Roster")';
+			var slackApiToken = '@ViewBag.SlackApiToken';
+			new App().run(seminarId, homePageUrl, rosterUrl, slackApiToken);
 		});
 	</script>
 }
