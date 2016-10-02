@@ -6,6 +6,7 @@
     "bootstrap": "3.3.6",
     "datatables": "1.10.11",
     "underscore": "1.8.3",
-    "js-xlsx": "0.8.0"
+    "js-xlsx": "0.8.0",
+    "moment": "2.13.0"
   }
 }

@@ -25,14 +25,8 @@
 			$('#seminarDate').text(seminar.date);
 			$('#seminarInstructor').text(seminar.instructor);
 
-			var now = new Date();
-			// remove the st from 1st, nd from 2nd, rd from 3rd and th from 4th, etc then parse
-			var when = new Date(seminar.date.replace(/(\d{1,2})(st|nd|rd|th)/, '$1'));
-			if (when > now) {
-				// subtract dates and convert msecs to days
-				var daysRemaining = Math.round((when - now) / (1000 /*msecs*/ * 60 /*secs*/ * 60  /*mins*/ * 24 /*hours*/));
-				$('#daysRemaining').text(daysRemaining + ' day(s) remaining.');
-			}
+			var daysFromNow = moment(seminar.date, 'MMM Do, YYYY').fromNow();
+			$('#daysRemaining').text(daysFromNow);
 		}
 
 		function persistTabs() {

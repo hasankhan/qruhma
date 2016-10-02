@@ -18,7 +18,8 @@
 				"wwwroot/lib/bootstrap/dist/js/bootstrap.js",
 				"wwwroot/lib/datatables/media/js/jquery.dataTables.js",
 				"wwwroot/lib/underscore/underscore.js",
-				"wwwroot/lib/js-xlsx/dist/xlsx.js"
+				"wwwroot/lib/js-xlsx/dist/xlsx.js",
+				"wwwroot/lib/moment/moment.js"
 			],
     // Optionally specify minification options
     "minify": {
