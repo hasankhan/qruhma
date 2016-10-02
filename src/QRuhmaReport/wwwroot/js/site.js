@@ -1,26 +1,4 @@
-﻿var seminars = [
-	{ id: 566, name: "Precious Provisions", title: "Fiqh of Food & Dress", date: "Mar 23rd, 2012", instructor: "Shaykh Yasir Qadhi" },
-	{ id: 602, name: "The Prophet's Smile", title: "Shamā’il (Characteristics) of Muhammad (S)", date: "Jun 22nd, 2012", instructor: "Shaykh Yaser Birjas" },
-	{ id: 633, name: "Love Notes", title: "Marriage and Family Life", date: "Sep 14th, 2012", instructor: "Shaykh Yaser Birjas" },
-	{ id: 663, name: "Rays of Faith", title: "Doctrines of Faith III", date: "Jan 18th, 2013", instructor: "Shaykh Waleed Basyouni" },
-	{ id: 714, name: "Fiqh of Chillin'", title: "Entertainment & Recreation in Islam", date: "Apr 19th, 2013", instructor: "Shaykh Saad Tasleem" },
-	{ id: 771, name: "Confidential", title: "Tafsīr Sūrat’l-Nūr", date: "Aug 23rd, 2013", instructor: "Shaykh Kamal El Mekki" },
-	{ id: 786, name: "Collector's Edition:", title: "Ṣaḥīḥ al-Bukhāri", date: "Nov 1st, 2013", instructor: "Shaykh Yasir Qadhi" },
-	{ id: 819, name: "Divine Link", title: "Fiqh of Worship II", date: "Feb 21st, 2014", instructor: "Shaykh Yaser Birjas" },
-	{ id: 865, name: "Deception", title: "Shaykh Saad Tasleem", date: "May 2nd, 2014", instructor: "Shaykh Saad Tasleem" },
-	{ id: 901, name: "Shadows in the Sun", title: "The Living Legacy of the Ṣaḥābah", date: "Sep 5th, 2014", instructor: "Shaykh Abdullah Hakim Quick" },
-	{ id: 942, name: "Behind the Scenes", title: "An In-Depth Study of the Spiritual Practices of the Best Generations", date: "Nov 14th, 2014", instructor: "Shaykh Omar Suleiman" },
-	{ id: 962, name: "IlmFest Conference", title: "IlmFest 2015", date: "Jan 11th, 2015", instructor: "Shaykh Abdulbary Yahya, Shaykh Kamal El Mekki, Shaykh Mohammed Faqih, Shaykh Saad Tasleem, Shaykh Waleed Basyouni, Shaykh Yaser Birjas, Shaykh Yasir Qadhi, Ustadha Yasmin Mogahed" },
-	{ id: 988, name: "Denial", title: "Tafsīr Sūrat’l-Raḥmān and Ya Sīn", date: "Apr 17th, 2015", instructor: "Shaykh Yasir Qadhi" },
-	{ id: 1031, name: "All Around Us", title: "Signs of the last day", date: "Aug 28th, 2015", instructor: "Shaykh Kamal El Mekki" },
-	{ id: 1070, name: "The Code Evolved", title: "Evolution of Fiqh", date: "Nov 13th, 2015", instructor: "Shaykh Yaser Birjas" },
-	{ id: 1104, name: "Firm Ground", title: "Foundations For Clarifying Textual Misinterpretation", date: "Jan 29th, 2016", instructor: "Shaykh Abdul Nasir Jangda" },
-	{ id: 1140, name: "Complicated?", title: "A to Z of Women's Modern Fiqh", date: "Apr 1st, 2016", instructor: "Shaykh Waleed Basyouni" },
-	{ id: 1171, name: "No Doubt", title: "God, Religion and Politics in the Modern World", date: "Sep 23rd, 2016", instructor: "Shaykh Yasir Qadhi" },
-	{ id: 1236, name: "Protect This House", title: "Al-Adab Al-Mufrad", date: "Dec 2nd, 2016", instructor: "Shaykh Yaser Birjas" }
-];
-
-var App = (function(){
+﻿var App = (function(){
 	function App () {
 	}
 
@@ -46,6 +24,15 @@ var App = (function(){
 			$('#seminarTitle').text(seminar.title);
 			$('#seminarDate').text(seminar.date);
 			$('#seminarInstructor').text(seminar.instructor);
+
+			var now = new Date();
+			// remove the st from 1st, nd from 2nd, rd from 3rd and th from 4th, etc then parse
+			var when = new Date(seminar.date.replace(/(\d{1,2})(st|nd|rd|th)/, '$1'));
+			if (when > now) {
+				// subtract dates and convert msecs to days
+				var daysRemaining = Math.round((when - now) / (1000 /*msecs*/ * 60 /*secs*/ * 60  /*mins*/ * 24 /*hours*/));
+				$('#daysRemaining').text(daysRemaining + ' day(s) remaining.');
+			}
 		}
 
 		function persistTabs() {

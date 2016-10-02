@@ -7,6 +7,8 @@
 
     <environment names="Development">
         <link rel="stylesheet" href="~/css/site.css" />
+		<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+		<link rel="stylesheet" href="~/lib/datatables/media/css/jquery.dataTables.css" />
     </environment>
     <environment names="Staging,Production">
         <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
@@ -25,6 +27,12 @@
     @RenderBody()
 
     <environment names="Development">
+		<script src="~/lib/jquery/dist/jquery.js" asp-append-version="true"></script>
+		<script src="~/lib/bootstrap/dist/js/bootstrap.js" asp-append-version="true"></script>
+		<script src="~/lib/datatables/media/js/jquery.dataTables.js" asp-append-version="true"></script>
+		<script src="~/lib/underscore/underscore.js" asp-append-version="true"></script>
+		<script src="~/lib/js-xlsx/dist/xlsx.js" asp-append-version="true"></script>
+        <script src="~/js/seminars.js" asp-append-version="true"></script>
         <script src="~/js/site.js" asp-append-version="true"></script>
     </environment>
     <environment names="Staging,Production">
