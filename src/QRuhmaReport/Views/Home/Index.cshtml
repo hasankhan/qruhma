@@ -53,8 +53,11 @@
 				   data-order='[[ 7, "desc" ]]'
 				   class="display">
 			</table>
-		</div>
-		
+			<div>
+				<button id="importBtn">Import</button>
+				<span id="importStatus" class="collapse">Done!</span>
+			</div>
+		</div>		
 		<div id="volunteers" class="tab-pane fade">
 			<center><h1>unregistered volunteers (<span id="unreg_volunteer_count"></span>)</h1></center>
 			<table id="volunteersTable" class="display" width="200"></table>
@@ -71,8 +74,9 @@
 			var seminarId = @ViewBag.SeminarId || seminars[seminars.length - 1].id;
 			var homePageUrl = '@Url.Action("Index", "Home")';
 			var rosterUrl = '@Url.Action("Index", "Roster")';
+			var studentsUrl = '@Url.Action("Index", "Students")';
 			var slackApiToken = '@ViewBag.SlackApiToken';
-			new App().run(seminarId, homePageUrl, rosterUrl, slackApiToken);
+			new App().run(seminarId, homePageUrl, rosterUrl, studentsUrl, slackApiToken);
 		});
 	</script>
 }

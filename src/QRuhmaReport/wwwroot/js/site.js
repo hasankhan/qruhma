@@ -2,7 +2,7 @@
 	function App () {
 	}
 
-	App.prototype.run = function(seminarId, homePageUrl, rosterUrl, slackApiToken) {
+	App.prototype.run = function(seminarId, homePageUrl, rosterUrl, studentsUrl, slackApiToken) {
 		var dataTable;
 		var volunteersList;
 		var studentsList;
@@ -18,6 +18,8 @@
 			window.location = homePageUrl + "?id=" + id;
 		});
 
+		$('#importBtn').click(importStudentList);
+
 		var seminar = _.find(seminars, function (s) { return s.id === seminarId; });
 		if (seminar) {
 			$('#seminarName').text(seminar.name);
@@ -27,6 +29,47 @@
 
 			var daysFromNow = moment(seminar.date, 'MMM Do, YYYY').fromNow();
 			$('#daysRemaining').text(daysFromNow);
+		}
+
+		function importStudentList() {
+			var importBtn = $('#importBtn');
+			importBtn.hide();
+
+			var importStatus = $('#importStatus');
+			importStatus.text('processing...').show();
+
+			var upsertList = [];
+			// download complete list of students
+			$.getJSON(studentsUrl, function (res) {
+				var allStudents = res.Documents || [];
+
+				// for each student in the roster, find and update the entry in master list or add a new entry
+				studentsList.forEach(function (student) {
+					var entry = addOrUpdateStudent(allStudents, student);
+					if (entry) {
+						upsertList.push(entry);
+					}
+				});
+
+				// post the updated list to the server
+				$.ajax({
+					type: 'post',
+					url: studentsUrl + '/update',
+					data: JSON.stringify(upsertList),
+					success: function () {
+						importStatus.text('done!');
+					},
+					contentType: 'application/json',
+					error: function (xhr) {
+						importStatus.text('failed!');
+						importBtn.show();
+					}
+				});
+			});
+		}
+
+		function addOrUpdateStudent(allStudents, student) {
+			return null;
 		}
 
 		function persistTabs() {
@@ -60,6 +103,9 @@
 				var workbook = XLSX.read(bstr, { type: "binary" });
 
 				transform(workbook);
+
+				$('importBtn').show();
+				$('importStatus').hide();
 			};
 
 			oReq.send();

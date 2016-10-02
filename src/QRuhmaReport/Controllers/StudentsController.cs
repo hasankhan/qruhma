@@ -23,13 +23,14 @@ namespace QRuhmaReport.Controllers
             this.config = config;
         }
 
+        [HttpGet]
         public async Task<IActionResult> Index([FromQuery(Name ="q")]string query)
         {
             query = String.IsNullOrEmpty(query) ? "select * from s" : query;
             return Content(await GetStudents(query), "application/json");
         }
 
-        [HttpPut]
+        [HttpPost]
         public async Task<IActionResult> Update([FromBody]List<Student> students)
         {
             foreach (Student student in students)
