@@ -24,66 +24,106 @@ namespace QRuhmaReport.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index([FromQuery(Name ="q")]string query)
+        public async Task<IActionResult> Index([FromQuery(Name ="q")]string query, [FromQuery(Name = "n")]int? top)
         {
             query = String.IsNullOrEmpty(query) ? "select * from s" : query;
-            return Content(await GetStudents(query), "application/json");
+            return Content(await GetStudents(query, top), "application/json");
         }
 
         [HttpPost]
         public async Task<IActionResult> Update([FromBody]List<Student> students)
         {
-            foreach (Student student in students)
+            await Task.WhenAll(students.Select(student =>
             {
                 string resource = "dbs/students/colls/registration";
                 string body = JsonConvert.SerializeObject(student);
                 var content = new StringContent(body, Encoding.UTF8, "application/json");
-                await this.ExecuteDocumentDbRequest(
-                resource: resource,
-                resourceType: "docs",
-                verb: "post",
-                action: httpClient => httpClient.PostAsync(resource + "/docs", content),
-                isQuery: false,
-                isUpsert: true);
-            }
+                content.Headers.Add("x-ms-documentdb-is-upsert", "True");
+                return (Task)this.ExecuteDocumentDbRequest(
+                    resource: resource,
+                    resourceType: "docs",
+                    verb: "post",
+                    action: httpClient => httpClient.PostAsync(resource + "/docs", content));
+            }));
 
             return Ok();
         }
 
-        async Task<string> GetStudents(string query)
+        async Task<string> GetStudents(string query, int? top)
         {
+            var output = new StringBuilder();
+            output.Append("[");
             string body = JsonConvert.SerializeObject(new 
             {
                 query = query,
                 parameters = new string[0]
             });
-            string resource = "dbs/students/colls/registration";
-            return await ExecuteDocumentDbRequest(
-                resource: resource,
-                resourceType: "docs",
-                verb: "post",
-                action: async (httpClient) =>
+
+            string continuationToken = null;
+            while (true)
+            {
+                string resource = "dbs/students/colls/registration";
+                string result = await ExecuteDocumentDbRequest(
+                    resource: resource,
+                    resourceType: "docs",
+                    verb: "post",
+                    action: async (httpClient) =>
+                    {
+                        var content = new StringContent(body);
+                        if (top.HasValue)
+                        {
+                            content.Headers.Add("x-ms-max-item-count", top.Value.ToString());
+                        }
+                        if (continuationToken != null)
+                        {
+                            content.Headers.Add("x-ms-continuation", continuationToken);
+                        }
+                        content.Headers.Add("x-ms-documentdb-isquery", "True");
+                        content.Headers.Remove("Content-Type");
+                        content.Headers.TryAddWithoutValidation("Content-Type", "application/query+json");
+                        HttpResponseMessage response = await httpClient.PostAsync(resource + "/docs", content);
+                        response.EnsureSuccessStatusCode();
+                        continuationToken = GetContinuationToken(response);
+                        return await response.Content.ReadAsStringAsync();
+                    }
+                 );
+                output.Append(result);
+                if (continuationToken == null)
                 {
-                    var content = new StringContent(body);
-                    content.Headers.Remove("Content-Type");
-                    content.Headers.TryAddWithoutValidation("Content-Type", "application/query+json");
-                    HttpResponseMessage response = await httpClient.PostAsync(resource + "/docs", content);
-                    response.EnsureSuccessStatusCode();
-                    return await response.Content.ReadAsStringAsync();
-                },
-                isQuery: true,
-                isUpsert: false
-             );
+                    break;
+                }
+                else
+                {
+                    output.Append(",");
+                }
+            }
+            output.Append("]");
+            return output.ToString();
         }
 
-        async Task<T> ExecuteDocumentDbRequest<T>(string resource, string resourceType, string verb, Func<HttpClient, Task<T>> action, bool isQuery, bool isUpsert)
+        static string GetContinuationToken(HttpResponseMessage response)
+        {
+            string continuationToken;
+            IEnumerable<string> tokens;
+            if (response.Headers.TryGetValues("x-ms-continuation", out tokens))
+            {
+                continuationToken = tokens.FirstOrDefault();
+            }
+            else
+            {
+                continuationToken = null;
+            }
+            return continuationToken;
+        }
+
+        async Task<T> ExecuteDocumentDbRequest<T>(string resource, string resourceType, string verb, Func<HttpClient, Task<T>> action)
         {
             string baseUrl = this.config.GetValue<string>("documentdb_baseurl");
             string key = this.config.GetValue<String>("documentdb_key");
-            return await ExecuteDocumentDbRequestAsync(baseUrl, key, resource, resourceType, verb, action, isQuery, isUpsert);
+            return await ExecuteDocumentDbRequestAsync(baseUrl, key, resource, resourceType, verb, action);
         }
 
-        private async Task<T> ExecuteDocumentDbRequestAsync<T>(string baseUrl, string key, string resource, string resourceType, string verb, Func<HttpClient, Task<T>> action, bool isQuery, bool isUpsert)
+        async Task<T> ExecuteDocumentDbRequestAsync<T>(string baseUrl, string key, string resource, string resourceType, string verb, Func<HttpClient, Task<T>> action)
         {
             string keyType = "master";
             string tokenVersion = "1.0";
@@ -93,19 +133,11 @@ namespace QRuhmaReport.Controllers
             {
                 httpClient.BaseAddress = new Uri(baseUrl);
                 string utcDate = DateTime.UtcNow.ToString("r").ToLowerInvariant();
+
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 httpClient.DefaultRequestHeaders.Add("authorization", GenerateAuthToken(verb, resource, resourceType, key, keyType, tokenVersion, utcDate));
                 httpClient.DefaultRequestHeaders.Add("x-ms-date", utcDate);
                 httpClient.DefaultRequestHeaders.Add("x-ms-version", apiVersion);
-
-                if (isQuery)
-                {
-                    httpClient.DefaultRequestHeaders.Add("x-ms-documentdb-isquery", isQuery.ToString());
-                }
-                else if (isUpsert)
-                {
-                    httpClient.DefaultRequestHeaders.Add("x-ms-documentdb-is-upsert", isUpsert.ToString());
-                }
 
                 T response = await action(httpClient);
                 return response;

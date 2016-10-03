@@ -5,7 +5,7 @@
 	App.prototype.run = function(seminarId, homePageUrl, rosterUrl, studentsUrl, slackApiToken) {
 		var dataTable;
 		var volunteersList;
-		var studentsList;
+		var studentsRoster;
 
 		var seminarList = $('#seminarList');
 		for (var i = seminars.length; i>0; i--) {
@@ -15,7 +15,7 @@
 
 		seminarList.on('click', 'li a', function () {
 			var id = $(this).data('val');
-			window.location = homePageUrl + "?id=" + id;
+			window.location = homePageUrl + "?id=" + id + window.location.hash;
 		});
 
 		$('#importBtn').click(importStudentList);
@@ -31,6 +31,13 @@
 			$('#daysRemaining').text(daysFromNow);
 		}
 
+		function parseDate(strDate) {
+			if (!strDate) {
+				return null;
+			}
+			return new Date(strDate);
+		}
+
 		function importStudentList() {
 			var importBtn = $('#importBtn');
 			importBtn.hide();
@@ -38,13 +45,14 @@
 			var importStatus = $('#importStatus');
 			importStatus.text('processing...').show();
 
-			var upsertList = [];
+			var upsertList = [];			
+
 			// download complete list of students
-			$.getJSON(studentsUrl, function (res) {
-				var allStudents = res.Documents || [];
+			$.getJSON(studentsUrl + '?n=10000', function (res) {
+				var allStudents = _.reduce(res, function (m, x) { return m.concat(x.Documents); }, []);
 
 				// for each student in the roster, find and update the entry in master list or add a new entry
-				studentsList.forEach(function (student) {
+				studentsRoster.forEach(function (student) {
 					var entry = addOrUpdateStudent(allStudents, student);
 					if (entry) {
 						upsertList.push(entry);
@@ -68,8 +76,85 @@
 			});
 		}
 
+		function parseNum(strNum) {
+			if (!strNum) {
+				return 0;
+			}
+			return parseInt(strNum);
+		}
+
+		function toTitleCase(text)
+		{
+			if (!text) {
+				return text;
+			}
+
+			return text.replace(/\w\S*/g, function (word) {
+				return word.charAt(0).toUpperCase() + word.substr(1).toLowerCase();
+			});
+		}
+
+		function createRegistration(student) {
+			return {
+				seminarId: seminarId,
+				regDate: parseDate(student["Registration Date"]),
+				paid: student["Fully Paid"] === "Yes",
+				amount: parseNum(student["Amt"]),
+				method: student["Method"],
+				ref: (student["Reference"] || "").toString(),
+				payDate: parseDate(student["Payment Date"])
+			};
+		}
+
 		function addOrUpdateStudent(allStudents, student) {
-			return null;
+			var found = _.find(allStudents, function (s) { return s.id === student["Email"]; });
+			if (!found) {
+				return {
+					id: student["Email"],
+					firstName: toTitleCase(student["First Name"]),
+					lastName: toTitleCase(student["Last Name"]),
+					gender: student["Gender"],
+					phone: student["Phone"],
+					dob: parseDate(student["DOB"]),
+					address: student["Address"],
+					city: toTitleCase(student["City"]),
+					state: student["State"],
+					zip: student["Postal/Zip"],
+					country: student["Country"],
+					registrations: [createRegistration(student)]
+				};
+			}
+			else {
+				var before = JSON.stringify(found);
+				found.firstName = found.firstName || toTitleCase(student["First Name"]);
+				found.lastName = found.lastName || toTitleCase(student["Last Name"]);
+				found.gender = found.gender || student["Gender"];
+				found.phone = found.phone || student["Phone"];
+				found.dob = found.dob|| parseDate(student["DOB"]);
+				found.address = found.address || student["Address"];
+				found.city = found.city || toTitleCase(student["City"]);
+				found.state = found.state || student["State"];
+				found.zip = found.zip || student["Postal/Zip"];
+				found.country = found.country || student["Country"];
+
+				var foundReg = _.find(found.registrations, function (r) { return r.seminarId === seminarId; });
+				var newReg = createRegistration(student);
+				if (!foundReg) {
+					found.registrations.push(newReg);
+				}
+				else {
+					// just update the existing registration by overwriting the values
+					_.extend(foundReg, newReg);
+				}
+				var after = JSON.stringify(found);
+				if (before !== after) {
+					return found;
+				}
+				else {
+					// no change
+					return null;
+				}
+			}
 		}
 
 		function persistTabs() {
@@ -86,7 +171,7 @@
 			});
 		}
 
-		function downloadStudentsList() {
+		function downloadRoster() {
 			var oReq = new XMLHttpRequest();
 			oReq.open("GET", rosterUrl + '?id=' + seminarId, true);
 			oReq.responseType = "arraybuffer";
@@ -129,7 +214,7 @@
 				headers.push({ alphabet: alphabet, title: title });
 			}
 
-			studentsList = [];
+			studentsRoster = [];
 			for (var row = 10; row < range.e.r; row++) {
 
 				var student = {};
@@ -148,15 +233,15 @@
 
 				// ignore students without a name
 				if (student['First Name'] || student['Last Name']) {
-					studentsList.push(student);
+					studentsRoster.push(student);
 				}
 			}
 
-			renderCharts(studentsList);
-			renderStats(studentsList);
+			renderCharts(studentsRoster);
+			renderStats(studentsRoster);
 
 			dataTable = $('#rosterTable').DataTable({
-				data: studentsList,
+				data: studentsRoster,
 				columns: [
 					{ title: '', searchable: false, orderable: false, defaultContent: '' },
 					{ title: 'First', data: 'First Name' },
@@ -185,8 +270,8 @@
 			fetchVolunteers();
 		}
 
-		function renderStats(studentsList) {
-			var genderCount = _.countBy(studentsList, function (x) { return x['Gender'] + '_' + x['Fully Paid']; });
+		function renderStats(studentsRoster) {
+			var genderCount = _.countBy(studentsRoster, function (x) { return x['Gender'] + '_' + x['Fully Paid']; });
 				
 			var paidBrothers = genderCount['m_Yes'] || 0;
 			var unpaidBrothers = genderCount['m_No'] || 0;
@@ -197,20 +282,20 @@
 			$('#sistersCount').text(paidSisters + '/' + (paidSisters + unpaidSisters));
 				
 			var totalCount = paidBrothers + paidSisters;
-			$('#studentCount').text(totalCount + '/' + studentsList.length);
+			$('#studentCount').text(totalCount + '/' + studentsRoster.length);
 								
 			var today = new Date();
 			today.setHours(0, 0, 0, 0);
 			today = today.toDateString();
-			var regToday = _.filter(studentsList, function (s) { return s['RegistrationStamp'] === today; }).length;
+			var regToday = _.filter(studentsRoster, function (s) { return s['RegistrationStamp'] === today; }).length;
 			$('#registeredToday').text(regToday);
 		}
 
-		function renderCharts(studentsList) {
+		function renderCharts(studentsRoster) {
 			var dateCountData =
 				_.map(
 					_.values(
-						_.groupBy(studentsList, function (x) { return x['RegistrationStamp']; })
+						_.groupBy(studentsRoster, function (x) { return x['RegistrationStamp']; })
 					),
 					function(x) {
 						return [
@@ -236,7 +321,7 @@
 				_.sortBy(
 					_.map(
 						_.values(
-							_.groupBy(studentsList, function (x) { return x['City'].toString().toLowerCase().trim().split(' ')[0]; })
+							_.groupBy(studentsRoster, function (x) { return x['City'].toString().toLowerCase().trim().split(' ')[0]; })
 						),
 						function(x) {
 							return [
@@ -248,8 +333,8 @@
 					function(x) { return -x[1]; }
 				);
 
-			var brotherAges = calculateAgeDistribution(studentsList, 'm');
-			var sisterAges = calculateAgeDistribution(studentsList, 'f');
+			var brotherAges = calculateAgeDistribution(studentsRoster, 'm');
+			var sisterAges = calculateAgeDistribution(studentsRoster, 'f');
 
 			$('#ageDistChart').highcharts({
 				chart: {
@@ -298,7 +383,7 @@
 
 			cityCountData = _.filter(cityCountData, function (x) { return x[1] > 1; });
 			var cityCountDataSum = _.reduce(cityCountData, function (m, x) { return m+x[1]; }, 0);
-			cityCountData.push(['other', studentsList.length - cityCountDataSum]);
+			cityCountData.push(['other', studentsRoster.length - cityCountDataSum]);
 
 			$('#regByCityChart').highcharts({
 				chart: {
@@ -344,10 +429,10 @@
 			});
 		}
 
-		function calculateAgeDistribution(studentsList, gender) {
+		function calculateAgeDistribution(studentsRoster, gender) {
 			var ageDist = _.map(
 						_.groupBy(
-							_.filter(studentsList, function (s) { return s['Gender'] === gender && !isNaN(s['Age']); }),
+							_.filter(studentsRoster, function (s) { return s['Gender'] === gender && !isNaN(s['Age']); }),
 							function (s) {
 								return s['Age'];
 							}
@@ -390,7 +475,7 @@
 
 				var unregistered = _.filter(volunteersList, function (v) {
 					// those volunteers are not in the students list
-					return v.profile.email && !v.deleted && !v.is_bot && !_.any(studentsList, function (s) {
+					return v.profile.email && !v.deleted && !v.is_bot && !_.any(studentsRoster, function (s) {
 						return v.isMatch(s.Email, s.Name);
 					});
 				});
@@ -410,7 +495,7 @@
 		}
 
 		persistTabs();
-		downloadStudentsList();		
+		downloadRoster();
 	};
 
 	return App;
