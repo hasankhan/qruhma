@@ -1,14 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using System.Net;
-using Microsoft.Net.Http.Headers;
-using System.IO;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace QRuhmaReport.Controllers
 {

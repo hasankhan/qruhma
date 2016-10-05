@@ -73,7 +73,7 @@
 
 			var seminarId = @ViewBag.SeminarId || seminars[seminars.length - 1].id;
 			var homePageUrl = '@Url.Action("Index", "Home")';
-			var rosterUrl = '@Url.Action("Index", "Roster")';
+			var rosterUrl = '@Url.Action("Index", "Registrations")';
 			var studentsUrl = '@Url.Action("Index", "Students")';
 			var slackApiToken = '@ViewBag.SlackApiToken';
 			new App().run(seminarId, homePageUrl, rosterUrl, studentsUrl, slackApiToken);

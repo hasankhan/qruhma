@@ -1,22 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Caching.Memory;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 
 namespace QRuhmaReport.Controllers
 {
-    public class RosterController : Controller
+    public class RegistrationsController : Controller
     {
         IConfiguration config;
         IMemoryCache cache;
 
-        public RosterController(IConfiguration config, IMemoryCache cache)
+        public RegistrationsController(IConfiguration config, IMemoryCache cache)
         {
             this.config = config;
             this.cache = cache;
