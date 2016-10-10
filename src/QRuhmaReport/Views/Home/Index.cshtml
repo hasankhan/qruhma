@@ -27,6 +27,7 @@
 		<li class="active"><a data-toggle="tab" href="#stats">Stats</a></li>
 		<li><a data-toggle="tab" href="#roster">Roster</a></li>
 		<li><a data-toggle="tab" href="#volunteers">Volunteers</a></li>
+		<li><a data-toggle="tab" href="#students">Students</a></li>
 	</ul>
 
 	<div class="tab-content">
@@ -61,6 +62,16 @@
 		<div id="volunteers" class="tab-pane fade">
 			<center><h1>unregistered volunteers (<span id="unreg_volunteer_count"></span>)</h1></center>
 			<table id="volunteersTable" class="display" width="200"></table>
+		</div>
+		<div id="students" class="tab-pane" fade">
+			<center><h1>Students</h1></center>
+			<div>
+				Query: <input id="queryText" />
+				<button id="queryBtn">query</button>
+			</div>
+			<div>
+				<textarea id="queryResultText"></textarea>
+			</div>			
 		</div>
 	</div>
 </div>

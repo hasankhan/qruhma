@@ -20,6 +20,8 @@
 
 		$('#importBtn').click(importStudentList);
 
+		$('#queryBtn').click(queryStudents);
+
 		var seminar = _.find(seminars, function (s) { return s.id === seminarId; });
 		if (seminar) {
 			$('#seminarName').text(seminar.name);
@@ -29,6 +31,20 @@
 
 			var daysFromNow = moment(seminar.date, 'MMM Do, YYYY').fromNow();
 			$('#daysRemaining').text(daysFromNow);
+		}
+
+		function queryStudents() {
+			var queryText = $('#queryText').val();
+			var queryResultText = $('#queryResultText');
+
+			$.getJSON(studentsUrl, {
+				n: 1000,
+				q: queryText
+			}).done(function (data) {
+				queryResultText.val(JSON.stringify(data, null, '\t'));
+			}).fail(function (err) {
+				queryResultText.val('Error: ' + err.responseText);
+			})
 		}
 
 		function parseDate(strDate) {
