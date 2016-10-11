@@ -33,6 +33,18 @@
 			$('#daysRemaining').text(daysFromNow);
 		}
 
+		$('#seminarTable').DataTable({
+			data: seminars,
+			columns: [
+				{ title: 'id', data: 'id' },
+				{ title: 'name', data: function (x) { return x.name + ' (' + x.title + ')'; } },
+				{ title: 'date', data: 'date' },
+				{ title: 'instructor', data: 'instructor' }
+			],
+			paging: false,
+			searching: false
+		}).draw();
+
 		function queryStudents() {
 			var queryText = $('#queryText').val();
 			var queryResultText = $('#queryResultText');

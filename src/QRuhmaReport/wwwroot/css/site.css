@@ -43,6 +43,7 @@ tr.volunteer.not_paid td {
 
 input#queryText {
 	width: 800px;
+	max-width:none;
 }
 
 textarea#queryResultText {
