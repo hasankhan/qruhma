@@ -14,74 +14,80 @@
 		<ul id="seminarList" class="dropdown-menu" aria-labelledby="seminarSelector">
 		</ul>
 	</div>
-	<br />
-	<div>
-		<span id="seminarName"></span>:  <span id="seminarTitle"></span><br />
-		<span id="seminarDate"></span>&nbsp;(<span id="daysRemaining"></span>)<br />
-		<span id="seminarInstructor"></span><br />
-	</div>
-
 	<br/>
-
-	<ul class="nav nav-tabs">
-		<li class="active"><a data-toggle="tab" href="#stats">Stats</a></li>
-		<li><a data-toggle="tab" href="#roster">Roster</a></li>
-		<li><a data-toggle="tab" href="#volunteers">Volunteers</a></li>
-		<li><a data-toggle="tab" href="#students">Students</a></li>
-	</ul>
-
-	<div class="tab-content">
-		<div id="stats" class="tab-pane fade in active">
-			<h2>Total students (<span id="studentCount"></span>)</h2>
-			<h2>Sisters: <span id="sistersCount"></span></h2>
-			<h2>Brothers: <span id="brothersCount"></span></h2>
-			<h2>Registered today: <span id="registeredToday"></span></h2>
-			<div id="regByDayChart" style="width:100%; min-width:600px; height: 400px; margin: 0 auto"></div>
-			<div id="regByCityChart" style="width: 100%; min-width: 600px; height: 400px; margin: 0 auto"></div>
-			<div id="ageDistChart" style="width: 100%; min-width: 600px; height: 400px; margin: 0 auto"></div>
+	<div class="row">
+		<div class="col-md-1">
+			<ul class="nav nav-pills nav-stacked">
+				<li class="active"><a data-toggle="tab" href="#stats">Stats</a></li>
+				<li><a data-toggle="tab" href="#roster">Roster</a></li>
+				<li><a data-toggle="tab" href="#volunteers">Volunteers</a></li>
+				<li><a data-toggle="tab" href="#students">Students</a></li>
+			</ul>
 		</div>
-
-		<div id="roster" class="tab-pane fade">
-			<table class="student_legend">
-				<tr class="volunteer">
-					<td>Volunteer</td>
-				</tr>
-				<tr class="volunteer not_paid">
-					<td>Volunteer has not paid</td>
-				</tr>
-			</table>
-			<table id="rosterTable"
-				   data-order='[[ 7, "desc" ]]'
-				   class="display">
-			</table>
+		<div>
 			<div>
-				<button id="importBtn">Import</button>
-				<span id="importStatus" class="collapse">Done!</span>
+				<span id="seminarName"></span>:  <span id="seminarTitle"></span><br />
+				<span id="seminarDate"></span>&nbsp;(<span id="daysRemaining"></span>)<br />
+				<span id="seminarInstructor"></span><br />
+			</div>
+			<div class="col-md-11 tab-content">
+				<div id="stats" class="tab-pane fade in active">
+					<h4>Total students (<span id="studentCount"></span>)</h4>
+					<h4>Sisters: <span id="sistersCount"></span></h4>
+					<h4>Brothers: <span id="brothersCount"></span></h4>
+					<h4>Registered today: <span id="registeredToday"></span></h4>
+					<div class="row">
+						<div class="col-md-6" id="regByDayChart" style="height: 400px"></div>
+						<div class="col-md-6" id="regByCityChart" style="height: 400px"></div>						
+					</div>
+					<div class="row">
+						<div class="col-md-6" id="ageDistChart" style="height: 400px"></div>
+					</div>
+				</div>
+
+				<div id="roster" class="tab-pane fade">
+					<table class="student_legend">
+						<tr class="volunteer">
+							<td>Volunteer</td>
+						</tr>
+						<tr class="volunteer not_paid">
+							<td>Volunteer has not paid</td>
+						</tr>
+					</table>
+					<table id="rosterTable"
+						   data-order='[[ 7, "desc" ]]'
+						   class="display"></table>
+					<div>
+						<button id="importBtn">Import</button>
+						<span id="importStatus" class="collapse">Done!</span>
+					</div>
+				</div>
+				<div id="volunteers" class="tab-pane fade">
+					<center><h1>unregistered volunteers (<span id="unreg_volunteer_count"></span>)</h1></center>
+					<table id="volunteersTable" class="display" width="200"></table>
+				</div>
+				<div id="students" class="tab-pane" fade">
+					<center><h1>Students</h1></center>
+					<div class="row">
+						<div class="col-sm-4">
+							<table id="seminarTable" class="display"></table>
+						</div>
+						<div class="col-sm-8">
+							<div>
+								Query: <input id="queryText" />
+								<button id="queryBtn">query</button>
+							</div>
+							<div>
+								<br />
+								<textarea id="queryResultText"></textarea>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>		
-		<div id="volunteers" class="tab-pane fade">
-			<center><h1>unregistered volunteers (<span id="unreg_volunteer_count"></span>)</h1></center>
-			<table id="volunteersTable" class="display" width="200"></table>
-		</div>
-		<div id="students" class="tab-pane" fade">
-			<center><h1>Students</h1></center>
-			<div class="row">
-				<div class="col-sm-6">
-					<table id="seminarTable" class="display"></table>
-				</div>
-				<div class="col-sm-6">
-					<div>
-						Query: <input id="queryText" />
-						<button id="queryBtn">query</button>
-					</div>
-					<div>
-						<br />
-						<textarea id="queryResultText"></textarea>
-					</div>
-				</div>
-			</div>			
-		</div>
 	</div>
+	
 </div>
 @section scripts {
 	<script src="https://code.highcharts.com/stock/highstock.js"></script>
