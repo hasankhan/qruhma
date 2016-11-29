@@ -21,6 +21,7 @@
 		$('#importBtn').click(importStudentList);
 
 		$('#queryBtn').click(queryStudents);
+		$('#queryBtn2').click(queryStudents2);
 
 		var seminar = _.find(seminars, function (s) { return s.id === seminarId; });
 		if (seminar) {
@@ -47,8 +48,16 @@
 
 		function queryStudents() {
 			var queryText = $('#queryText').val();
-			var queryResultText = $('#queryResultText');
+			studentQuery(queryText);
+		}
 
+		function queryStudents2() {
+			var queryEmail = $('#queryByEmail').val();
+			studentQuery("select * from s where s.id = '" + queryEmail + "'");
+		}
+
+		function studentQuery(queryText) {
+			var queryResultText = $('#queryResultText');
 			$.getJSON(studentsUrl, {
 				n: 1000,
 				q: queryText
