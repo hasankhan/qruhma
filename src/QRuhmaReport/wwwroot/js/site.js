@@ -206,6 +206,10 @@
 					location.hash = '#' + $(e.target).attr('href').substr(1);
 				}
 			});
+
+			$(window).on("hashchange", function () {
+				$('a[href="' + window.location.hash + '"]').tab('show');
+			});
 		}
 
 		function downloadRoster() {
@@ -284,7 +288,13 @@
 					{ title: 'First', data: 'First Name' },
 					{ title: 'Last', data: 'Last Name' },
 					{ title: 'Gender', data: 'Gender' },
-					{ title: 'Email', data: 'Email' },
+					{
+						title: 'Email',
+						data: 'Email',
+						render: function (data) {
+							return "<a href='javascript:void(0)' class='student-id'>" + data + "</a>";
+						}
+					},
 					{ title: 'City', data: 'City' },
 					{ title: 'State', data: 'State' },
 					{ title: 'Reg. Date', data: 'RegistrationStamp' },
@@ -297,6 +307,12 @@
 					.each(function (cell, i) { 
 						cell.innerHTML = i+1; } 
 					);
+			});
+
+			$('#rosterTable .student-id').on('click', function () {
+				$('#queryByEmail').val($(this).text());
+				$('#queryBtn2').click();
+				$('a[href="#students"]').tab('show')
 			});
 				
 			dataTable.draw();
