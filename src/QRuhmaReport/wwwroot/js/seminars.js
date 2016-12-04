@@ -17,5 +17,6 @@
 	{ id: 1104, name: "Firm Ground", title: "Foundations For Clarifying Textual Misinterpretation", date: "Jan 29th, 2016", instructor: "Shaykh Abdul Nasir Jangda" },
 	{ id: 1140, name: "Complicated?", title: "A to Z of Women's Modern Fiqh", date: "Apr 1st, 2016", instructor: "Shaykh Waleed Basyouni" },
 	{ id: 1171, name: "No Doubt", title: "God, Religion and Politics in the Modern World", date: "Sep 23rd, 2016", instructor: "Shaykh Yasir Qadhi" },
-	{ id: 1236, name: "Protect This House", title: "Al-Adab Al-Mufrad", date: "Dec 2nd, 2016", instructor: "Shaykh Yaser Birjas" }
+	{ id: 1236, name: "Protect This House", title: "Al-Adab Al-Mufrad", date: "Dec 2nd, 2016", instructor: "Shaykh Yaser Birjas" },
+	{ id: 1274, name: "Shahadah", title: "The Fiqh of Da‘wah", date: "Feb 17, 2017", instructor: "Shaykh Kamal El Mekki" }
 ];
