@@ -22,6 +22,9 @@
 
 		$('#queryBtn').click(queryStudents);
 		$('#queryBtn2').click(queryStudents2);
+		$('#queryBtn3').click(queryStudents3);
+		$('#nophone').click(DoNotCall);
+		$('#nomail').click(DoNotEmail);
 
 		var seminar = _.find(seminars, function (s) { return s.id === seminarId; });
 		if (seminar) {
@@ -54,6 +57,19 @@
 		function queryStudents2() {
 			var queryEmail = $('#queryByEmail').val();
 			studentQuery("select * from s where s.id = '" + queryEmail + "'");
+		}
+
+		function queryStudents3() {
+			var queryEmail = $('#queryByPhone').val();
+			studentQuery("select * from s where s.phone = '" + queryEmail + "'");
+		}
+
+		function DoNotCall() {
+			alert('not yet implemented');
+		}
+
+		function DoNotEmail() {
+			alert('not yet implemented');
 		}
 
 		function studentQuery(queryText) {
