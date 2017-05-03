@@ -1,16 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{700C9162-3C3B-43EF-B2A8-57B4F6C56A75}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2FFB2DAB-D72E-45D6-88EC-0B7B7F322F62}"
-	ProjectSection(SolutionItems) = preProject
-		global.json = global.json
-	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "QRuhmaReport", "src\QRuhmaReport\QRuhmaReport.xproj", "{691243A0-58E2-464B-9E2C-AEE1FD0C18BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QRuhmaReport", "src\QRuhmaReport\QRuhmaReport.csproj", "{691243A0-58E2-464B-9E2C-AEE1FD0C18BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

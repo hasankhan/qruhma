@@ -81,7 +81,7 @@
 				queryResultText.val(JSON.stringify(data, null, '\t'));
 			}).fail(function (err) {
 				queryResultText.val('Error: ' + err.responseText);
-			})
+			});
 		}
 
 		function parseDate(strDate) {
@@ -328,7 +328,7 @@
 			$('#rosterTable .student-id').on('click', function () {
 				$('#queryByEmail').val($(this).text());
 				$('#queryBtn2').click();
-				$('a[href="#students"]').tab('show')
+				$('a[href="#students"]').tab('show');
 			});
 				
 			dataTable.draw();
